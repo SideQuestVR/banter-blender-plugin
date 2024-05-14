@@ -129,20 +129,20 @@ def combineMeshes(objList: list):
 
     return bpy.context.view_layer.objects.active
 
-def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, preserveShapeKeys: bool = False):
+def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False):
     # Get current triangle count
     sampleObj.update_from_editmode()
     current_triangles = getMeshPolyCount(sampleObj)
 
     targetPolyCount = lodLevel.value
 
-    suffix = f"_{lodLevel.name}"
-
     # Duplicate the object
-    newLodObject = sampleObj.copy()
-    newLodObject.data = sampleObj.data.copy()
-    newLodObject.name = sampleObj.name + suffix
-    bpy.context.collection.objects.link(newLodObject)
+    if overwrite:
+        newLodObject = sampleObj
+    else:
+        newLodObject = sampleObj.copy()
+        newLodObject.data = sampleObj.data.copy()
+        bpy.context.collection.objects.link(newLodObject)
 
     if current_triangles > targetPolyCount:
 
@@ -163,7 +163,7 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, preserveShapeKeys: b
         # bpy.ops.object.shape_key_remove(all=True)
 
         # Apply decimation
-        mod = newLodObject.modifiers.new(name="Decimate" + suffix, type='DECIMATE')
+        mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
 
         if shapeKeyObj:
             shapeKeyCount = getMeshPolyCount(shapeKeyObj)

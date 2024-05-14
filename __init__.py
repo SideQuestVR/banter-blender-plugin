@@ -203,7 +203,21 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
             if obj.mesh:
                 meshes.append(obj.mesh)
 
-        generateLOD(combineMeshes(meshes), intToLod(self.lodLevel), True if self.lodLevel == 0 else False)
+        targetObj = combineMeshes(meshes)
+        targetObj.name = 'Avatar_LOD' + str(self.lodLevel)
+
+        lodObj = generateLOD(targetObj, intToLod(self.lodLevel), True, True if self.lodLevel == 0 else False)
+
+        match self.lodLevel:
+            case 0:
+                bpy.context.scene.banter_pLod0Avatar = lodObj
+            case 1:
+                bpy.context.scene.banter_pLod1Avatar = lodObj
+            case 2:
+                bpy.context.scene.banter_pLod2Avatar = lodObj
+            case 3:
+                bpy.context.scene.banter_pLod3Avatar = lodObj
+
         return {"FINISHED"}
     
 class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
