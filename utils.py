@@ -127,6 +127,9 @@ def combineMeshes(objList: list):
     bpy.context.view_layer.objects.active = copylist[0]
     bpy.ops.object.join()
 
+    mod = bpy.context.view_layer.objects.active.modifiers.new(name="Triangulate", type='TRIANGULATE')
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
     return bpy.context.view_layer.objects.active
 
 def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False):
