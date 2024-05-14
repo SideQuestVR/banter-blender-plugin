@@ -150,6 +150,8 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
     if current_triangles > targetPolyCount:
 
         bpy.context.view_layer.objects.active = newLodObject
+
+        # Preserve and seperate shape keys
         shapeKeyObj = None
         if newLodObject.data.shape_keys:
             if preserveShapeKeys:
@@ -160,14 +162,10 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
             bpy.context.view_layer.objects.active = newLodObject
             bpy.ops.object.shape_key_remove(all=True)
 
-        # bpy.ops.object.select_all(action='DESELECT')
-        # newLodObject.select_set(True)
-        # bpy.context.view_layer.objects.active = newLodObject
-        # bpy.ops.object.shape_key_remove(all=True)
-
         # Apply decimation
         mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
 
+        # if shape keys, remove the shape key count from the target count
         if shapeKeyObj:
             shapeKeyCount = getMeshPolyCount(shapeKeyObj)
             targetPolyCount -= shapeKeyCount
