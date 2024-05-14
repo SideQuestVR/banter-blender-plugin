@@ -84,10 +84,11 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 #endregion
         layout.separator()
 #region Local Avatar
-        col = layout.column(heading='Local Avatar')
-        if bpy.context.scene.banter_pLocalAvatar and len(bpy.context.scene.banter_pLocalAvatar) > 0:
+        col = layout.column()
+        col.label(text="Local Avatar")
+        if bpy.context.scene.banter_cLocalAvatar and len(bpy.context.scene.banter_cLocalAvatar) > 0:
             meshrow = col.row()
-            meshrow.template_list("BANTER_UL_MeshList", "", bpy.data.scenes[0], "banter_pLocalAvatar", bpy.data.scenes[0], "banter_pLocalAvatarSelectedMesh")
+            meshrow.template_list("BANTER_UL_MeshList", "", bpy.data.scenes[0], "banter_cLocalAvatar", bpy.data.scenes[0], "banter_cLocalAvatarSelectedMesh")
             meshcol = meshrow.column(align=True)
             meshcol.operator("banter.add_object_local_avatar", icon="ADD", text="")
             meshcol.operator("banter.remove_object_local_avatar", icon="REMOVE", text="")
@@ -102,26 +103,33 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 #endregion
         layout.separator()
 #region LODs
+        aLodIsMissing = False
         col = layout.row(align=True)
         col.prop(context.scene, 'banter_pLod0Avatar', text='LOD0', icon="OUTLINER_DATA_MESH")
         if not bpy.context.scene.banter_pLod0Avatar:
             col.operator('banter.dummy', icon="ADD", text="")
+            aLodIsMissing = True
 
         col = layout.row(align=True)
         col.prop(context.scene, 'banter_pLod1Avatar', text='LOD1', icon="OUTLINER_DATA_MESH")
         if not bpy.context.scene.banter_pLod1Avatar:
             col.operator('banter.dummy', icon="ADD", text="")
+            aLodIsMissing = True
         
         col = layout.row(align=True)
         col.prop(context.scene, 'banter_pLod2Avatar', text='LOD2', icon="OUTLINER_DATA_MESH")
         if not bpy.context.scene.banter_pLod2Avatar:
             col.operator('banter.dummy', icon="ADD", text="")
+            aLodIsMissing = True
 
         col = layout.row(align=True)
         col.prop(context.scene, 'banter_pLod3Avatar', text='LOD3', icon="OUTLINER_DATA_MESH")
         if not bpy.context.scene.banter_pLod3Avatar:
             col.operator('banter.dummy', icon="ADD", text="")
-        layout.operator('banter.dummy', text='Create missing remote Avatar LODs')
+            aLodIsMissing = True
+
+        if aLodIsMissing: 
+            layout.operator('banter.genmissinglods', text='Create missing remote Avatar LODs')
 #endregion
 
 #region Upload
@@ -184,6 +192,35 @@ class BANTER_PT_Validator(bpy.types.Panel):
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
 
+class Banter_OT_GenerateMissingLods(bpy.types.Operator):
+    bl_idname = "banter.genmissinglods"
+    bl_label = "Generate Missing LODs"
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.context.scene.banter_cLocalAvatar is not None and \
+            len(bpy.context.scene.banter_cLocalAvatar) > 0 and \
+            (bpy.context.scene.banter_pLod0Avatar is None or \
+            bpy.context.scene.banter_pLod1Avatar is None or \
+            bpy.context.scene.banter_pLod2Avatar is None or \
+            bpy.context.scene.banter_pLod3Avatar is None)
+    
+    def execute(self, context):
+        if bpy.context.scene.banter_cLocalAvatar is None:
+            return {"CANCELLED"}
+        
+        if bpy.context.scene.banter_pLod0Avatar is None:
+            bpy.ops.banter.genlod(lodLevel=0)
+        if bpy.context.scene.banter_pLod1Avatar is None:
+            bpy.ops.banter.genlod(lodLevel=1)
+        if bpy.context.scene.banter_pLod2Avatar is None:
+            bpy.ops.banter.genlod(lodLevel=2)
+        if bpy.context.scene.banter_pLod3Avatar is None:
+            bpy.ops.banter.genlod(lodLevel=3)
+
+        return {"FINISHED"}
+
 class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
     bl_idname = "banter.genlod"
     bl_label = "Generate Mesh for LOD"
@@ -193,18 +230,18 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return bpy.context.scene.banter_pLocalAvatar is not None
+        return bpy.context.scene.banter_cLocalAvatar is not None
 
     def execute(self, context):
-        print(intToLod(self.lodLevel))
 
         meshes = []
-        for obj in bpy.context.scene.banter_pLocalAvatar:
+        for obj in bpy.context.scene.banter_cLocalAvatar:
             if obj.mesh:
                 meshes.append(obj.mesh)
 
         targetObj = combineMeshes(meshes)
         targetObj.name = 'Avatar_LOD' + str(self.lodLevel)
+        print(targetObj.name)
 
         lodObj = generateLOD(targetObj, intToLod(self.lodLevel), True, True if self.lodLevel == 0 else False)
 
@@ -233,7 +270,7 @@ class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
     def execute(self, context):
         for obj in context.selected_objects:
             if obj.type == 'MESH':
-                item = context.scene.banter_pLocalAvatar.add()
+                item = context.scene.banter_cLocalAvatar.add()
                 item.mesh = obj
         return {"FINISHED"}
 
@@ -245,10 +282,10 @@ class Banter_OT_RemoveObjectFromLocalAvatarList(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.scene.banter_pLocalAvatar and len(context.scene.banter_pLocalAvatar) > 0
+        return context.scene.banter_cLocalAvatar and len(context.scene.banter_cLocalAvatar) > 0
 
     def execute(self, context):
-        context.scene.banter_pLocalAvatar.remove(context.scene.banter_pLocalAvatarSelectedMesh)
+        context.scene.banter_cLocalAvatar.remove(context.scene.banter_cLocalAvatarSelectedMesh)
         return {"FINISHED"}
 
 
@@ -343,7 +380,7 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
         return not False
 
     def execute(self, context):
-        localCount = getObjectsPolyCount(bpy.context.scene.banter_pLocalAvatar) if bpy.context.scene.banter_pLocalAvatar else 1000000
+        localCount = getObjectsPolyCount(bpy.context.scene.banter_cLocalAvatar) if bpy.context.scene.banter_cLocalAvatar else 1000000
         lod0lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod0Avatar) if bpy.context.scene.banter_pLod0Avatar else 1000000)
         lod1lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod1Avatar) if bpy.context.scene.banter_pLod1Avatar else 1000000)
         lod2lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod2Avatar) if bpy.context.scene.banter_pLod2Avatar else 1000000)
@@ -418,6 +455,7 @@ def register():
     bpy.utils.register_class(Banter_OT_ImportArmature)
     bpy.utils.register_class(Banter_OT_UploadToSideQuest)
     bpy.utils.register_class(Banter_OT_PerformPrecheck)
+    bpy.utils.register_class(Banter_OT_GenerateMissingLods)
     bpy.utils.register_class(Banter_OT_GenerateMeshForLod)
     bpy.utils.register_class(Banter_OT_AddObjectToLocalAvatarList)
     bpy.utils.register_class(Banter_OT_RemoveObjectFromLocalAvatarList)
@@ -438,8 +476,8 @@ def register():
     bpy.types.Scene.banter_bMeetsLod3 = bpy.props.BoolProperty(name='MeetsLod3', description='Test if the Avatar is less than LOD3', default=False)
 
     bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Armature)
-    bpy.types.Scene.banter_pLocalAvatar = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
-    bpy.types.Scene.banter_pLocalAvatarSelectedMesh = bpy.props.IntProperty(name='LocalAvatarSelectedMesh', description='', default=0)
+    bpy.types.Scene.banter_cLocalAvatar = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
+    bpy.types.Scene.banter_cLocalAvatarSelectedMesh = bpy.props.IntProperty(name='LocalAvatarSelectedMesh', description='', default=0)
     bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Mesh)
     bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object)
     bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object)
@@ -468,8 +506,8 @@ def unregister():
     del bpy.types.Scene.banter_bMeetsLod3
 
     del bpy.types.Scene.banter_pArmature
-    del bpy.types.Scene.banter_pLocalAvatar
-    del bpy.types.Scene.banter_pLocalAvatarSelectedMesh
+    del bpy.types.Scene.banter_cLocalAvatar
+    del bpy.types.Scene.banter_cLocalAvatarSelectedMesh
     del bpy.types.Scene.banter_pLocalHeadMesh
     del bpy.types.Scene.banter_pLod0Avatar
     del bpy.types.Scene.banter_pLod1Avatar
@@ -490,6 +528,7 @@ def unregister():
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
     bpy.utils.unregister_class(Banter_OT_UploadToSideQuest)
     bpy.utils.unregister_class(Banter_OT_PerformPrecheck)
+    bpy.utils.unregister_class(Banter_OT_GenerateMissingLods)
     bpy.utils.unregister_class(Banter_OT_GenerateMeshForLod)
     bpy.utils.unregister_class(Banter_OT_AddObjectToLocalAvatarList)
     bpy.utils.unregister_class(Banter_OT_RemoveObjectFromLocalAvatarList)
