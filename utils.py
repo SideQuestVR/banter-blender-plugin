@@ -110,15 +110,24 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
     
 def combineMeshes(objList: list):
     bpy.ops.object.select_all(action='DESELECT')
-
-    copylist = objList.copy()
+    
+    copylist = []
+    for obj in objList:
+        newObj = obj.copy()
+        newObj.data = obj.data.copy()
+        ## UV layers will NOT join unless they have the same name
+        for layer in newObj.data.uv_layers:
+            layer.name = "UV0"
+        copylist.append(newObj)
+        bpy.context.collection.objects.link(newObj)
+    
     for obj in copylist:
         obj.select_set(True)
 
     bpy.context.view_layer.objects.active = copylist[0]
     bpy.ops.object.join()
 
-    return objList[0]
+    return bpy.context.view_layer.objects.active
 
 def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, preserveShapeKeys: bool = False):
     # Get current triangle count
