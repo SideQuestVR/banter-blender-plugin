@@ -13,7 +13,7 @@ import os
 from typing import List
 import bpy
 import bpy.utils.previews
-from .utils import generateLOD, getMeshPolyCount, intToLod, getLodGroup, Lod
+from .utils import combineMeshes, generateLOD, getMeshPolyCount, intToLod, getLodGroup, Lod
 
 addon_keymaps = {}
 _icons = None
@@ -198,7 +198,12 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
     def execute(self, context):
         print(intToLod(self.lodLevel))
 
-        generateLOD(bpy.context.scene.banter_pLocalAvatar, intToLod(self.lodLevel), True if self.lodLevel == 0 else False)
+        meshes = []
+        for obj in bpy.context.scene.banter_pLocalAvatar:
+            if obj.mesh:
+                meshes.append(obj.mesh)
+
+        generateLOD(combineMeshes(meshes), intToLod(self.lodLevel), True if self.lodLevel == 0 else False)
         return {"FINISHED"}
     
 class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):

@@ -107,6 +107,18 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
     else:
         print("No active mesh with shape keys found.")
         return None
+    
+def combineMeshes(objList: list):
+    bpy.ops.object.select_all(action='DESELECT')
+
+    copylist = objList.copy()
+    for obj in copylist:
+        obj.select_set(True)
+
+    bpy.context.view_layer.objects.active = copylist[0]
+    bpy.ops.object.join()
+
+    return objList[0]
 
 def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, preserveShapeKeys: bool = False):
     # Get current triangle count
