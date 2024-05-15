@@ -28,7 +28,7 @@ class BANTER_UL_MeshList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.prop(item, "mesh", text="", emboss=False)
+            layout.prop(item, "mesh", text="", emboss=False, )#icon_value=layout.icon(item.mesh.data))
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
@@ -61,6 +61,7 @@ class BANTER_PT_Credentials(bpy.types.Panel):
             col.label(text='Logged in as ' + bpy.context.scene.banter_sUsername, icon_value=0)
             op = col.operator('banter.login', text='Logout', icon_value=0, emboss=True, depress=False)
 
+#region Panels
 class BANTER_PT_Configurator(bpy.types.Panel):
     bl_label = 'Avatar Configurator'
     bl_idname = 'BANTER_PT_Configurator'
@@ -97,7 +98,6 @@ class BANTER_PT_Configurator(bpy.types.Panel):
             innercol = col.column(align=True)
             innercol.label(text='No Local Avatar Meshes')
             innercol.operator("banter.add_object_local_avatar", text="Use Selected Objects")
-            innercol.operator('banter.dummy', text='Create Local Avatar')
             innercol.operator('banter.dummy', text='Import RPM Avatar')
             innercol.operator('banter.dummy', text='Import Mixamo Avatar')
 #endregion
@@ -133,7 +133,8 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 #endregion
 
 #region Upload
-        layout.operator('banter.dummy', text='Upload Avatar')
+        if bpy.context.scene.banter_bPassed:
+            layout.operator('banter.upload', text='Upload Avatar')
 #endregion
 
 class BANTER_PT_Validator(bpy.types.Panel):
@@ -191,7 +192,9 @@ class BANTER_PT_Validator(bpy.types.Panel):
             if not bpy.context.scene.banter_bMeetsLod3:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
+#engregion
 
+#region Operators
 class Banter_OT_GenerateMissingLods(bpy.types.Operator):
     bl_idname = "banter.genmissinglods"
     bl_label = "Generate Missing LODs"
@@ -261,7 +264,7 @@ class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
     bl_idname = "banter.add_object_local_avatar"
     bl_label = "Add Meshes"
     bl_description = "Adds selected meshes to the list of meshes that define your local avatar"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     @classmethod
     def poll(cls, context):
@@ -278,7 +281,7 @@ class Banter_OT_RemoveObjectFromLocalAvatarList(bpy.types.Operator):
     bl_idname = "banter.remove_object_local_avatar"
     bl_label = "Remove Mesh"
     bl_description = "Removes the highlighted mesh from the list of meshes that define your local avatar"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     @classmethod
     def poll(cls, context):
@@ -288,12 +291,11 @@ class Banter_OT_RemoveObjectFromLocalAvatarList(bpy.types.Operator):
         context.scene.banter_cLocalAvatar.remove(context.scene.banter_cLocalAvatarSelectedMesh)
         return {"FINISHED"}
 
-
 class Banter_OT_OpenUrl(bpy.types.Operator):
     bl_idname = "banter.open_url"
     bl_label = "Open URL"
     bl_description = ""
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     @classmethod
     def poll(cls, context):
@@ -335,37 +337,14 @@ class Banter_OT_UploadToSideQuest(bpy.types.Operator):
     bl_idname = "banter.upload"
     bl_label = "Upload"
     bl_description = ""
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     @classmethod
     def poll(cls, context):
-        if bpy.app.version >= (3, 0, 0) and True:
-            cls.poll_message_set('')
-        return not False
+        return bpy.context.scene.banter_bPassed
 
     def execute(self, context):
         return {"FINISHED"}
-
-    def draw(self, context):
-        layout = self.layout
-        if bpy.context.scene.banter_bPassed:
-            op = layout.operator('sn.dummy_button_operator', text='Export and Upload', icon_value=0, emboss=True, depress=False)
-        else:
-            row = layout.row(heading='', align=False)
-            row.alert = True
-            row.enabled = True
-            row.active = True
-            row.use_property_split = False
-            row.use_property_decorate = False
-            row.scale_x = 1.0
-            row.scale_y = 1.0
-            row.alignment = 'EXPAND'
-            row.operator_context = "INVOKE_DEFAULT" if True else "EXEC_DEFAULT"
-            row.label(text='ERROR:' + 'Trangles above 30k on remote Avatar' + 'Local Avatar looks like crap', icon_value=0)
-
-    def invoke(self, context, event):
-        context.window_manager.invoke_props_popup(self, event)
-        return self.execute(context)
 
 class Banter_OT_PerformPrecheck(bpy.types.Operator):
     bl_idname = "banter.precheck"
@@ -438,6 +417,7 @@ class Banter_OT_Dummy(bpy.types.Operator):
     def execute(self, context):
 
         return {"FINISHED"}
+#endregion
 
 def register():
     global _icons
