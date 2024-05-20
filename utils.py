@@ -1,4 +1,5 @@
 from enum import IntEnum
+import bmesh
 import bpy
 
 # LOCAL_LIMIT = 120000
@@ -7,8 +8,22 @@ import bpy
 # LOD2 = 5000
 # LOD3 = 500
 
+# @dataclass
+# class Lod:
+#     PolyCount: int
+#     MergeDistance: float
+
+#     Lod0 = Lod(30000, 0.0)
+
+# class Lod():
+#     PolyCount: int
+#     MergeDistance: float
+
+#     @staticmethod
+#     Lod0():
+#         return Lod(30000, 0.0)
 class Lod(IntEnum):
-    LOD3 = 1500
+    LOD3 = 1000
     LOD2 = 5000
     LOD1 = 15000
     LOD0 = 30000
@@ -127,9 +142,6 @@ def combineMeshes(objList: list):
     bpy.context.view_layer.objects.active = copylist[0]
     bpy.ops.object.join()
 
-    mod = bpy.context.view_layer.objects.active.modifiers.new(name="Triangulate", type='TRIANGULATE')
-    bpy.ops.object.modifier_apply(modifier=mod.name)
-
     return bpy.context.view_layer.objects.active
 
 def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False):
@@ -160,25 +172,67 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
             bpy.ops.object.select_all(action='DESELECT')
             newLodObject.select_set(True)
             bpy.context.view_layer.objects.active = newLodObject
+            bpy.context.object.active_shape_key_index = 0
             bpy.ops.object.shape_key_remove(all=True)
-
-        # Apply decimation
-        mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
 
         # if shape keys, remove the shape key count from the target count
         if shapeKeyObj:
             shapeKeyCount = getMeshPolyCount(shapeKeyObj)
             targetPolyCount -= shapeKeyCount
 
-        ratio = targetPolyCount / current_triangles
-        mod.ratio = ratio
         bpy.context.view_layer.objects.active = newLodObject
+
+        # Merge close vertices
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        match lodLevel:
+            case Lod.LOD1:
+                bpy.ops.mesh.remove_doubles(threshold=0.005)
+            case Lod.LOD2:
+                bpy.ops.mesh.remove_doubles(threshold=0.0075)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Triangulate
+        mod = newLodObject.modifiers.new(name="Triangulate", type='TRIANGULATE')
         bpy.ops.object.modifier_apply(modifier=mod.name)
 
+        # Refresh count after removing shape keys and triangulation
+        current_triangles = getMeshPolyCount(newLodObject)
+
+        match lodLevel:
+            case Lod.LOD0 | Lod.LOD1 | Lod.LOD2:
+                # Decimate
+                mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
+                mod.ratio = targetPolyCount / current_triangles
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+            case Lod.LOD3:
+                # Decimate to Lod2, then weld
+                mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
+                mod.ratio = Lod.LOD2 / current_triangles
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+                # Weld
+                merge_threshold = 0.0
+                while getMeshPolyCount(newLodObject) > targetPolyCount:
+                    merge_threshold += 0.005
+                    mod = newLodObject.modifiers.new(name="Weld", type='WELD')
+                    mod.merge_threshold = merge_threshold
+                    bpy.ops.object.modifier_apply(modifier=mod.name)
+                    print(mod.merge_threshold, getMeshPolyCount(newLodObject))
+
+        # Merge shape keys back
         if shapeKeyObj:
             bpy.context.view_layer.objects.active = newLodObject
             newLodObject.select_set(True)
             shapeKeyObj.select_set(True)
             bpy.ops.object.join()
+
+        # Clean up
+        bm = bmesh.new()
+        bm.from_mesh(newLodObject.data)
+        vertices_to_remove = [v for v in bm.verts if not v.link_faces]
+        bmesh.ops.delete(bm, geom=vertices_to_remove, context='VERTS')
+        bm.to_mesh(newLodObject.data)
+        bm.free()
+        newLodObject.data.update()
 
     return newLodObject
