@@ -12,6 +12,8 @@ import urllib.parse
 class SqAppApi:
     def __init__(self):
         self.user = None
+        self.login_code = None
+        self.token = None
         client_id = "client_85b087d9975cb8ca5bb575a2" # test
         # client_id = "client_0e4c67f9a6bbe12143870312" # prod
         self.config = SqAppApiConfig(client_id, os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources"), True, "sqappapi.json")
@@ -40,20 +42,20 @@ class SqAppApi:
 
     def load_data(self):
         path = os.path.join(self.config.data_path, self.config.data_file_name)
+        self.check_code_timer = RepeatedTimer(10 if self.login_code is None else self.login_code.interval, self.check_login_code_complete)
         if os.path.exists(path):
             file = open(path, 'r')
-            data = json.load(file)
-            print(json.dumps(data))
+            data = json.loads(file.read())
+            file.close()
             self.user = SqUser(data["User"])
             self.token = SqTokenInfo(data["Token"])
             self.token.access_token_expires_at_str = self.token.access_token_expires_at
             self.token.access_token_expires_at = datetime.fromisoformat(self.token.access_token_expires_at.replace('Z', '+00:00')).replace(tzinfo=None)
             self.refresh_user_profile()
-            file.close()
         else:
             self.get_login_code()
-            self.check_code_timer = RepeatedTimer(self.login_code.interval, self.check_login_code_complete)
             self.check_code_timer.start()
+
 
     def get_user_profile(self):
         if self.token is None:
@@ -67,10 +69,10 @@ class SqAppApi:
         self.login_code = None;
         os.remove(os.path.join(self.config.data_path, self.config.data_file_name))
         self.get_login_code()
+        self.check_code_timer.start()
 
     def refresh_user_profile(self):
         self.user = self.get_user_profile()
-        print("refresh_user_profile", self.user.user_id, self.token.user_id)
         if str(self.user.user_id) != str(self.token.user_id):
             raise SqApiException("User refreshed data does not match user token ID!")
 
@@ -179,21 +181,34 @@ class SqAppApi:
 
     def get_auth_token(self):
         if self.token is None or self.token.access_token_expires_at is None:
-            raise SqEditorApiAuthException("No user is logged in")
+            raise SqApiAuthException("No user is logged in")
 
         if datetime.utcnow() < self.token.access_token_expires_at - timedelta(minutes=1) and self.token.access_token:
             return self.token.access_token
 
         if not self.token.refresh_token:
             self.logout()
-            raise SqEditorApiAuthException("User refresh token is missing, logging user out")
+            raise SqApiAuthException("User refresh token is missing, logging user out")
 
         response = self.post_form_encoded_string_no_auth("/v2/oauth/token", "grant_type=refresh_token&refresh_token=" + urllib.parse.quote_plus(self.token.refresh_token) + "&client_id=" + self.token.client_id)
 
         if response is None or response.get("access_token") is None:
-            raise SqEditorApiAuthException("Failed to retrieve auth token")
+            raise SqApiAuthException("Failed to retrieve auth token")
 
-        print(response)
+        new_auth = {
+            "refresh_token": self.token.refresh_token,
+            "access_token": response["access_token"],
+            "access_token_expires_at": datetime.fromisoformat(response["access_token_expires_at"].replace('Z', '+00:00')).replace(tzinfo=None),
+            "access_token_expires_at_str": response["access_token_expires_at"],
+            "refresh_token_expires_at": self.token.refresh_token_expires_at,
+            "users_id": self.token.user_id,
+            "client_id": self.token.client_id,
+            "apps_id": self.token.app_id,
+            "scopes": self.token.granted_scopes
+        }
+        self.token = SqTokenInfo(new_auth)
+        return self.token.access_token
+
 
 
 class RepeatedTimer(object):

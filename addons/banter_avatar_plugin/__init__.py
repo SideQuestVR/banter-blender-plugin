@@ -35,6 +35,11 @@ class BANTER_UL_MeshList(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
 
+# class CodeProp(bpy.types.PropertyGroup):
+
+#     code: bpy.props.StringProperty(default="...")
+
+
 class BANTER_PT_Credentials(bpy.types.Panel):
     bl_label = 'Account'
     bl_idname = 'BANTER_PT_Credentials'
@@ -44,6 +49,8 @@ class BANTER_PT_Credentials(bpy.types.Panel):
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
     _timer = None
+
+    
 
     @classmethod
     def draw(self, context):
@@ -57,6 +64,9 @@ class BANTER_PT_Credentials(bpy.types.Panel):
             col.label(text='To Sign In: ' , icon_value=0)
             col.label(text='Go to ' + sq_api.login_code.verification_url , icon_value=0)
             col.label(text='and put in ' + sq_api.login_code.code , icon_value=0)
+            # props = bpy.context.scene.CodeProp
+            # col.prop(props, "code", text=sq_api.login_code.code)
+            col.label(text='Please allow up to 10s after you enter the code.' , icon_value=0)
             op = col.operator('banter.open_url', text='Open Page', icon_value=0, emboss=True, depress=False)
         else:
             col = layout.column(heading='', align=False)
@@ -438,6 +448,8 @@ def register():
 
     bpy.utils.register_class(banter_avatar_collection)
 
+    # bpy.types.Scene.CodeProp = bpy.props.PointerProperty(type=CodeProp)
+
 
     bpy.types.Scene.banter_sLoginCode = bpy.props.StringProperty(name='6erCode', description='', default='XXXXXX', subtype='NONE', maxlen=0)
     bpy.types.Scene.banter_bLoggedIn = bpy.props.BoolProperty(name='LoggedIn', description='', default=True)
@@ -472,7 +484,7 @@ def unregister():
     del bpy.types.Scene.banter_bLoggedIn
     del bpy.types.Scene.banter_sLoginCode
 
-
+    # del bpy.types.Scene.CodeProp 
     del bpy.types.Scene.banter_bPassed
 
     del bpy.types.Scene.banter_bMeetsLocalLimit
