@@ -14,9 +14,11 @@ from typing import List
 import bpy
 import bpy.utils.previews
 from .utils import combineMeshes, generateLOD, getMeshPolyCount, intToLod, getLodGroup, Lod
+from .sq_app_api import SqAppApi
 
 addon_keymaps = {}
 _icons = None
+sq_api = SqAppApi()
 
 class banter_avatar_collection(bpy.types.PropertyGroup):
     mesh: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
@@ -41,6 +43,7 @@ class BANTER_PT_Credentials(bpy.types.Panel):
     bl_context = ''
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
+    _timer = None
 
     @classmethod
     def draw(self, context):
@@ -48,18 +51,32 @@ class BANTER_PT_Credentials(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-
-        if not bpy.context.scene.banter_bLoggedIn:
+        if(sq_api.user is None):
             col = layout.column(heading='', align=False)
-            op = col.operator('banter.open_url', text='Link to My Sidequest', icon_value=0, emboss=True, depress=False)
-            op = col.operator('banter.login', text='(Fake Login)', icon_value=0, depress=False)
-            col.label(text='Link Code: ' + bpy.context.scene.banter_sLoginCode, icon_value=0)
-            col = layout.column(heading='', align=False)
-            row = col.row(heading='', align=False)
+            # op = col.operator('banter.login', text='(Fake Login)', icon_value=0, depress=False)
+            col.label(text='To Sign In: ' , icon_value=0)
+            col.label(text='Go to ' + sq_api.login_code.verification_url , icon_value=0)
+            col.label(text='and put in ' + sq_api.login_code.code , icon_value=0)
+            op = col.operator('banter.open_url', text='Open Page', icon_value=0, emboss=True, depress=False)
         else:
             col = layout.column(heading='', align=False)
-            col.label(text='Logged in as ' + bpy.context.scene.banter_sUsername, icon_value=0)
-            op = col.operator('banter.login', text='Logout', icon_value=0, emboss=True, depress=False)
+            col.label(text='Logged in as ' + sq_api.user.name, icon_value=0)
+            op = col.operator('banter.logout', text='Logout', icon_value=0, emboss=True, depress=False)
+
+    
+class Banter_OT_LogOut(bpy.types.Operator):
+    bl_idname = "banter.logout"
+    bl_label = "Log Out"
+    bl_description = ""
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        sq_api.logout()
+        return {"FINISHED"}
 
 #region Panels
 class BANTER_PT_Configurator(bpy.types.Panel):
@@ -305,7 +322,7 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
 
     def execute(self, context):
         exec('import webbrowser')
-        exec("webbrowser.open('https://sidequestvr.com/link-sidequest')")
+        exec("webbrowser.open('https://links.sidetestvr.com/link')")
         return {"FINISHED"}
 
 class Banter_OT_ImportArmature(bpy.types.Operator):
@@ -382,27 +399,6 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
         # else:
         #     bpy.context.scene.banter_bPassed = (not bpy.context.scene.banter_bPassed)
         return {"FINISHED"}
-
-    
-class Banter_OT_LogIn(bpy.types.Operator):
-    bl_idname = "banter.login"
-    bl_label = "Log In"
-    bl_description = ""
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        if bpy.app.version >= (3, 0, 0) and True:
-            cls.poll_message_set('')
-        return not False
-
-    def execute(self, context):
-        if bpy.context.scene.banter_bLoggedIn:
-            bpy.context.scene.banter_bLoggedIn = (not bpy.context.scene.banter_bLoggedIn)
-        else:
-            bpy.context.scene.banter_bLoggedIn = (not bpy.context.scene.banter_bLoggedIn)
-        return {"FINISHED"}
-
     
 class Banter_OT_Dummy(bpy.types.Operator):
     bl_idname = "banter.dummy"
@@ -430,7 +426,7 @@ def register():
     bpy.utils.register_class(BANTER_PT_Validator)
 
     bpy.utils.register_class(Banter_OT_Dummy)
-    bpy.utils.register_class(Banter_OT_LogIn)
+    bpy.utils.register_class(Banter_OT_LogOut)
     bpy.utils.register_class(Banter_OT_OpenUrl)
     bpy.utils.register_class(Banter_OT_ImportArmature)
     bpy.utils.register_class(Banter_OT_UploadToSideQuest)
@@ -503,7 +499,7 @@ def unregister():
     bpy.utils.unregister_class(BANTER_UL_MeshList)
 
     bpy.utils.unregister_class(Banter_OT_Dummy)
-    bpy.utils.unregister_class(Banter_OT_LogIn)
+    bpy.utils.unregister_class(Banter_OT_LogOut)
     bpy.utils.unregister_class(Banter_OT_OpenUrl)
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
     bpy.utils.unregister_class(Banter_OT_UploadToSideQuest)
