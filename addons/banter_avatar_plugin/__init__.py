@@ -71,6 +71,8 @@ class BANTER_PT_Credentials(bpy.types.Panel):
         else:
             col = layout.column(heading='', align=False)
             col.label(text='Logged in as ' + sq_api.user.name, icon_value=0)
+            op = col.operator('banter.export_avatars', text='Export Avatars', icon_value=0, emboss=True, depress=False)
+            op = col.operator('banter.upload_avatars', text='Upload Avatars', icon_value=0, emboss=True, depress=False)
             op = col.operator('banter.logout', text='Logout', icon_value=0, emboss=True, depress=False)
 
     
@@ -86,6 +88,36 @@ class Banter_OT_LogOut(bpy.types.Operator):
 
     def execute(self, context):
         sq_api.logout()
+        return {"FINISHED"}
+
+    
+class Banter_OT_Avatars(bpy.types.Operator):
+    bl_idname = "banter.upload_avatars"
+    bl_label = "Upload Avatars"
+    bl_description = ""
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        sq_api.upload_avatars()
+        return {"FINISHED"}
+
+    
+class Banter_OT_ExportAvatars(bpy.types.Operator):
+    bl_idname = "banter.export_avatars"
+    bl_label = "Export Avatars"
+    bl_description = ""
+    bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        
         return {"FINISHED"}
 
 #region Panels
@@ -437,6 +469,8 @@ def register():
 
     bpy.utils.register_class(Banter_OT_Dummy)
     bpy.utils.register_class(Banter_OT_LogOut)
+    bpy.utils.register_class(Banter_OT_Avatars)
+    bpy.utils.register_class(Banter_OT_ExportAvatars)
     bpy.utils.register_class(Banter_OT_OpenUrl)
     bpy.utils.register_class(Banter_OT_ImportArmature)
     bpy.utils.register_class(Banter_OT_UploadToSideQuest)
@@ -447,6 +481,8 @@ def register():
     bpy.utils.register_class(Banter_OT_RemoveObjectFromLocalAvatarList)
 
     bpy.utils.register_class(banter_avatar_collection)
+
+
 
     # bpy.types.Scene.CodeProp = bpy.props.PointerProperty(type=CodeProp)
 
@@ -512,6 +548,8 @@ def unregister():
 
     bpy.utils.unregister_class(Banter_OT_Dummy)
     bpy.utils.unregister_class(Banter_OT_LogOut)
+    bpy.utils.unregister_class(Banter_OT_Avatars)
+    bpy.utils.unregister_class(Banter_OT_ExportAvatars)
     bpy.utils.unregister_class(Banter_OT_OpenUrl)
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
     bpy.utils.unregister_class(Banter_OT_UploadToSideQuest)
