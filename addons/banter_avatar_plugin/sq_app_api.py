@@ -101,26 +101,30 @@ class SqAppApi:
         create_upload_high = json.loads(self.json_post("/create-upload", True, True, json.dumps({
             "name": "high_avatar.glb",
             "size": os.path.getsize(high),
-            "type": "application/json",
+            "type": "application/octet-stream",
             "purpose": "banter-avatar"
         })))
 
         create_upload_low = json.loads(self.json_post("/create-upload", True, True, json.dumps({
             "name": "low_avatar.glb",
             "size": os.path.getsize(low),
-            "type": "application/json",
+            "type": "application/octet-stream",
             "purpose": "banter-avatar"
         })))
         high_domain = urlparse(create_upload_high["upload_uri"]).netloc
         high_path = create_upload_high["upload_uri"].split(high_domain)[1]
         high_file = open(high, "rb")
-        upload_high = self.json_post(high_path, False, False, high_file.read(), "PUT", high_domain)
+        upload_high = self.json_post(high_path, False, False, high_file.read(), "PUT", high_domain, {
+            'Content-Type': 'application/octet-stream'
+        })
         high_file.close()
 
         low_domain = urlparse(create_upload_low["upload_uri"]).netloc
         low_path = create_upload_low["upload_uri"].split(low_domain)[1]
         low_file = open(low, "rb")
-        upload_low = self.json_post(low_path, False, False, low_file.read(), "PUT", low_domain)
+        upload_low = self.json_post(low_path, False, False, low_file.read(), "PUT", low_domain, {
+            'Content-Type': 'application/octet-stream'
+        })
         low_file.close()
 
         set_avatar = self.json_post("/v2/users/me/avatar/files", False, True, json.dumps({
@@ -132,7 +136,9 @@ class SqAppApi:
     def json_put(self, path, is_cdn, with_auth, body):
         self.json_post(self, path, is_cdn, with_auth, body, "PUT")
 
-    def json_post(self, path, is_cdn, with_auth, body, method = "POST", url = None):
+    def json_post(self, path, is_cdn, with_auth, body, method = "POST", url = None, headers = {
+            'Content-Type': 'application/json'
+        }):
         the_url = self.config.root_api_uri
         if not url is None:
             the_url = url
@@ -140,16 +146,9 @@ class SqAppApi:
             the_url = self.config.root_cdn_uri
             
         conn = http.client.HTTPSConnection(the_url)
-        # if url is None:
-        headers = {
-            'Content-Type': 'application/json'
-        }
-        # else:
-            # headers = {}
 
         if(with_auth and self.token != None):
             headers["Authorization"] = "Bearer " + self.get_auth_token()
-        
         conn.request(method, path, body, headers)
         res = conn.getresponse()
         data = res.read()
@@ -209,10 +208,11 @@ class SqAppApi:
             return False, None
 
         print("checking code...")
-        response = json.loads(self.json_post("/v2/oauth/checkshortcode", False, False, json.dumps({
+        response_json = self.json_post("/v2/oauth/checkshortcode", False, False, json.dumps({
             "code": self.login_code.code,
             "device_id": self.login_code.device_id
-        })))
+        }))
+        response = None if response_json is None else json.loads(response_json)
 
         if response is None:
             self._last_login_poll = datetime.now()
