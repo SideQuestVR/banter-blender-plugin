@@ -3,7 +3,6 @@ import os
 import http.client
 from datetime import datetime, timedelta
 import bpy
-import requests
 from .sq_models import *
 from .sq_exceptions import *
 from threading import Timer
@@ -70,9 +69,9 @@ class SqAppApi:
         return SqUser(self.json_get("/v2/users/me", True))
 
     def logout(self):
-        self.user = None;
-        self.token = None;
-        self.login_code = None;
+        self.user = None
+        self.token = None
+        self.login_code = None
         os.remove(os.path.join(self.config.data_path, self.config.data_file_name))
         self.get_login_code()
         self.check_code_timer.start()
@@ -96,8 +95,8 @@ class SqAppApi:
         return json.loads(data.decode("utf-8"))
 
     def upload_avatars(self):
-        high = os.path.join(self.config.data_path, "high.glb")
-        low = os.path.join(self.config.data_path, "low.glb")
+        high = os.path.join(bpy.app.tempdir, "banter_avatar_high.glb")
+        low = os.path.join(bpy.app.tempdir, "banter_avatar_low.glb")
         create_upload_high = json.loads(self.json_post("/create-upload", True, True, json.dumps({
             "name": "high_avatar.glb",
             "size": os.path.getsize(high),

@@ -39,18 +39,15 @@ class BANTER_UL_MeshList(bpy.types.UIList):
 
 #     code: bpy.props.StringProperty(default="...")
 
-
-class BANTER_PT_Credentials(bpy.types.Panel):
+class BANTER_PT_Exporter(bpy.types.Panel):
     bl_label = 'Account'
-    bl_idname = 'BANTER_PT_Credentials'
+    bl_idname = 'BANTER_PT_Exporter'
     bl_space_type = "VIEW_3D"
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
     _timer = None
-
-    
 
     @classmethod
     def draw(self, context):
@@ -89,9 +86,8 @@ class Banter_OT_LogOut(bpy.types.Operator):
     def execute(self, context):
         sq_api.logout()
         return {"FINISHED"}
-
     
-class Banter_OT_Avatars(bpy.types.Operator):
+class Banter_OT_UploadAvatars(bpy.types.Operator):
     bl_idname = "banter.upload_avatars"
     bl_label = "Upload Avatars"
     bl_description = ""
@@ -99,9 +95,10 @@ class Banter_OT_Avatars(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return bpy.context.scene.banter_bPassed
 
     def execute(self, context):
+        bpy.ops.banter.export_avatars()
         sq_api.upload_avatars()
         return {"FINISHED"}
 
@@ -114,10 +111,33 @@ class Banter_OT_ExportAvatars(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return bpy.context.scene.banter_bPassed
 
     def execute(self, context):
-        
+        highpath = os.path.join(bpy.app.tempdir, "banter_avatar_high.glb")
+        lowpath = os.path.join(bpy.app.tempdir, "banter_avatar_low.glb")
+        print(highpath)
+
+        #select elements of local avatar
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.scene.banter_pArmature.select_set(True)
+        for obj in bpy.context.scene.banter_cLocalAvatar:
+            if obj.mesh:
+                obj.mesh.select_set(True)
+
+        bpy.ops.export_scene.gltf(filepath=highpath, check_existing=False, use_selection=True, export_animations=False)
+
+        #select lods
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.scene.banter_pArmature.select_set(True)
+        bpy.context.scene.banter_pLod0Avatar.select_set(True)
+        bpy.context.scene.banter_pLod1Avatar.select_set(True)
+        bpy.context.scene.banter_pLod2Avatar.select_set(True)
+        bpy.context.scene.banter_pLod3Avatar.select_set(True)
+
+        bpy.ops.export_scene.gltf(filepath=lowpath, check_existing=False, use_selection=True, export_animations=False)
+
+        print("exported!")
         return {"FINISHED"}
 
 #region Panels
@@ -189,11 +209,6 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 
         if aLodIsMissing: 
             layout.operator('banter.genmissinglods', text='Create missing remote Avatar LODs')
-#endregion
-
-#region Upload
-        if bpy.context.scene.banter_bPassed:
-            layout.operator('banter.upload', text='Upload Avatar')
 #endregion
 
 class BANTER_PT_Validator(bpy.types.Panel):
@@ -388,22 +403,9 @@ class Banter_OT_ImportArmature(bpy.types.Operator):
                 bpy.context.collection.objects.link(obj)
                 if not bpy.context.scene.banter_pArmature:
                     if obj.type == 'ARMATURE':
-                        bpy.context.scene.banter_pArmature = obj.data
+                        bpy.context.scene.banter_pArmature = obj
         
         return {'FINISHED'}
-
-class Banter_OT_UploadToSideQuest(bpy.types.Operator):
-    bl_idname = "banter.upload"
-    bl_label = "Upload"
-    bl_description = ""
-    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
-
-    @classmethod
-    def poll(cls, context):
-        return bpy.context.scene.banter_bPassed
-
-    def execute(self, context):
-        return {"FINISHED"}
 
 class Banter_OT_PerformPrecheck(bpy.types.Operator):
     bl_idname = "banter.precheck"
@@ -463,17 +465,16 @@ def register():
 
     bpy.utils.register_class(BANTER_UL_MeshList)
 
-    bpy.utils.register_class(BANTER_PT_Credentials)
     bpy.utils.register_class(BANTER_PT_Configurator)
     bpy.utils.register_class(BANTER_PT_Validator)
+    bpy.utils.register_class(BANTER_PT_Exporter)
 
     bpy.utils.register_class(Banter_OT_Dummy)
     bpy.utils.register_class(Banter_OT_LogOut)
-    bpy.utils.register_class(Banter_OT_Avatars)
+    bpy.utils.register_class(Banter_OT_UploadAvatars)
     bpy.utils.register_class(Banter_OT_ExportAvatars)
     bpy.utils.register_class(Banter_OT_OpenUrl)
     bpy.utils.register_class(Banter_OT_ImportArmature)
-    bpy.utils.register_class(Banter_OT_UploadToSideQuest)
     bpy.utils.register_class(Banter_OT_PerformPrecheck)
     bpy.utils.register_class(Banter_OT_GenerateMissingLods)
     bpy.utils.register_class(Banter_OT_GenerateMeshForLod)
@@ -499,7 +500,7 @@ def register():
     bpy.types.Scene.banter_bMeetsLod2 = bpy.props.BoolProperty(name='MeetsLod2', description='Test if the Avatar is less than LOD2', default=False)
     bpy.types.Scene.banter_bMeetsLod3 = bpy.props.BoolProperty(name='MeetsLod3', description='Test if the Avatar is less than LOD3', default=False)
 
-    bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Armature)
+    bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object)
     bpy.types.Scene.banter_cLocalAvatar = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
     bpy.types.Scene.banter_cLocalAvatarSelectedMesh = bpy.props.IntProperty(name='LocalAvatarSelectedMesh', description='', default=0)
     bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Mesh)
@@ -540,7 +541,7 @@ def unregister():
 
     bpy.utils.unregister_class(banter_avatar_collection)
 
-    bpy.utils.unregister_class(BANTER_PT_Credentials)
+    bpy.utils.unregister_class(BANTER_PT_Exporter)
     bpy.utils.unregister_class(BANTER_PT_Configurator)
     bpy.utils.unregister_class(BANTER_PT_Validator)
 
@@ -548,11 +549,10 @@ def unregister():
 
     bpy.utils.unregister_class(Banter_OT_Dummy)
     bpy.utils.unregister_class(Banter_OT_LogOut)
-    bpy.utils.unregister_class(Banter_OT_Avatars)
+    bpy.utils.unregister_class(Banter_OT_UploadAvatars)
     bpy.utils.unregister_class(Banter_OT_ExportAvatars)
     bpy.utils.unregister_class(Banter_OT_OpenUrl)
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
-    bpy.utils.unregister_class(Banter_OT_UploadToSideQuest)
     bpy.utils.unregister_class(Banter_OT_PerformPrecheck)
     bpy.utils.unregister_class(Banter_OT_GenerateMissingLods)
     bpy.utils.unregister_class(Banter_OT_GenerateMeshForLod)
