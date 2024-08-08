@@ -94,9 +94,9 @@ class SqAppApi:
         data = res.read()
         return json.loads(data.decode("utf-8"))
 
-    def upload_avatars(self):
-        high = os.path.join(bpy.app.tempdir, "banter_avatar_high.glb")
-        low = os.path.join(bpy.app.tempdir, "banter_avatar_low.glb")
+    def upload_avatars(self, highpath, lowpath):
+        high = highpath
+        low = lowpath
         create_upload_high = json.loads(self.json_post("/create-upload", True, True, json.dumps({
             "name": "high_avatar.glb",
             "size": os.path.getsize(high),

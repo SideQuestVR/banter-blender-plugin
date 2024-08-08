@@ -2,7 +2,7 @@ bl_info = {
     "name" : "Banter Avatar Creator",
     "author" : "SideQuest", 
     "description" : "Create and upload avatars to Banter",
-    "blender" : (3, 0, 0),
+    "blender" : (4, 2, 0),
     "version" : (1, 0, 0),
     "location" : "View3D > Sidebar > BANTER",
     "support": 'COMMUNITY', 
@@ -163,7 +163,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
                 op.lodLevel = 3
 
 class BANTER_PT_Exporter(bpy.types.Panel):
-    bl_label = 'Account'
+    bl_label = 'Export'
     bl_idname = 'BANTER_PT_Exporter'
     bl_space_type = "VIEW_3D"
     bl_region_type = 'UI'
@@ -188,11 +188,12 @@ class BANTER_PT_Exporter(bpy.types.Panel):
             # col.prop(props, "code", text=sq_api.login_code.code)
             col.label(text='Please allow up to 10s after you enter the code.' , icon_value=0)
             op = col.operator('banter.open_url', text='Open Page', icon_value=0, emboss=True, depress=False)
+            op.url = "https://links.sidetestvr.com/link"
         else:
             col = layout.column(heading='', align=False)
             col.label(text='Logged in as ' + sq_api.user.name, icon_value=0)
             op = col.operator('banter.export_avatars', text='Export Avatars', icon_value=0, emboss=True, depress=False)
-            op = col.operator('banter.upload_avatars', text='Upload Avatars', icon_value=0, emboss=True, depress=False)
+            op = col.operator('banter.upload_avatars', text='Export & Upload Avatars', icon_value=0, emboss=True, depress=False)
             op = col.operator('banter.logout', text='Logout', icon_value=0, emboss=True, depress=False)
 #endregion
 
@@ -299,6 +300,8 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
     bl_description = ""
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
+    url: bpy.props.StringProperty(name='URL', description='', default='') # type: ignore
+
     @classmethod
     def poll(cls, context):
         if bpy.app.version >= (3, 0, 0) and True:
@@ -307,7 +310,7 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
 
     def execute(self, context):
         exec('import webbrowser')
-        exec("webbrowser.open('https://links.sidetestvr.com/link')")
+        exec(f"webbrowser.open('{self.url}')")
         return {"FINISHED"}
 
 class Banter_OT_ImportArmature(bpy.types.Operator):
@@ -371,6 +374,7 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
         # else:
         #     bpy.context.scene.banter_bPassed = (not bpy.context.scene.banter_bPassed)
         return {"FINISHED"}
+
 class Banter_OT_LogOut(bpy.types.Operator):
     bl_idname = "banter.logout"
     bl_label = "Log Out"
@@ -385,6 +389,65 @@ class Banter_OT_LogOut(bpy.types.Operator):
         sq_api.logout()
         return {"FINISHED"}
     
+class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
+    bl_idname = "banter.export_avatars"
+    bl_label = "Export Avatars"
+    bl_description = ""
+    bl_options = {"REGISTER"}
+
+    #directory: bpy.props.StringProperty(subtype='DIR_PATH') # type: ignore
+    #filename: bpy.props.StringProperty(subtype= default="banter_avatar.glb") # type: ignore
+    #filepath = bpy.props.StringProperty(subtype='FILE_PATH', default="banter_avatar.glb") # type: ignore
+
+    filter_glob: bpy.props.StringProperty(default='*.glb', options={'HIDDEN'}) # type: ignore
+    filename_ext = '.glb'
+    filename = "banter_avatar"
+
+    def invoke(self, context, event):
+        return ExportHelper.invoke(self, context, event)
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.context.scene.banter_bPassed
+
+    def execute(self, context):        
+        try:
+            path, ext = os.path.splitext(self.filepath)
+            highpath = self.filepath
+            lowpath = path + f"_lods{ext}"
+
+            #select elements of local avatar
+            bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.scene.banter_pArmature.select_set(True)
+            for obj in bpy.context.scene.banter_cLocalAvatar:
+                if obj.mesh:
+                    obj.mesh.select_set(True)
+
+            bpy.context.scene.banter_bIsCurrentlyExporting = True
+            bpy.ops.export_scene.gltf(filepath=highpath, check_existing=False, use_selection=True)
+            bpy.context.scene.banter_sLocalExportPath = highpath
+            bpy.context.scene.banter_bIsCurrentlyExporting = False
+
+            print(lowpath)
+            #select lods
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.scene.banter_pArmature.select_set(True)
+            bpy.context.scene.banter_pLod0Avatar.select_set(True)
+            bpy.context.scene.banter_pLod1Avatar.select_set(True)
+            bpy.context.scene.banter_pLod2Avatar.select_set(True)
+            bpy.context.scene.banter_pLod3Avatar.select_set(True)
+
+            bpy.context.scene.banter_bIsCurrentlyExporting = True
+            bpy.ops.export_scene.gltf(filepath=lowpath, check_existing=False, use_selection=True)
+            bpy.context.scene.banter_sLodExportPath = lowpath
+            bpy.context.scene.banter_bIsCurrentlyExporting = False
+            return {"FINISHED"}
+        except Exception:
+            bpy.context.scene.banter_sLocalExportPath = ""
+            bpy.context.scene.banter_sLodExportPath = ""
+            raise Exception("Export failed")
+
 class Banter_OT_UploadAvatars(bpy.types.Operator):
     bl_idname = "banter.upload_avatars"
     bl_label = "Upload Avatars"
@@ -394,50 +457,24 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         return bpy.context.scene.banter_bPassed
+    
+    def invoke(self, context, event):
+        bpy.ops.banter.export_avatars("INVOKE_DEFAULT")
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def modal(self, context, event):
+        if bpy.context.scene.banter_sLocalExportPath and bpy.context.scene.banter_sLodExportPath:
+            return self.execute(context)
+        return {'PASS_THROUGH'}
 
     def execute(self, context):
-        bpy.ops.banter.export_avatars()
-        sq_api.upload_avatars()
+        sq_api.upload_avatars(bpy.context.scene.banter_sLocalExportPath, bpy.context.scene.banter_sLodExportPath)
+        bpy.context.scene.banter_sLocalExportPath = ""
+        bpy.context.scene.banter_sLodExportPath = ""
         return {"FINISHED"}
 
-class Banter_OT_ExportAvatars(bpy.types.Operator):
-    bl_idname = "banter.export_avatars"
-    bl_label = "Export Avatars"
-    bl_description = ""
-    bl_options = {"REGISTER"}
 
-    @classmethod
-    def poll(cls, context):
-        return bpy.context.scene.banter_bPassed
-
-    def execute(self, context):
-        bpy.context.scene.banter_bIsCurrentlyExporting = True
-        highpath = os.path.join(bpy.app.tempdir, "banter_avatar_high.glb")
-        lowpath = os.path.join(bpy.app.tempdir, "banter_avatar_low.glb")
-        print(highpath)
-
-        #select elements of local avatar
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.scene.banter_pArmature.select_set(True)
-        for obj in bpy.context.scene.banter_cLocalAvatar:
-            if obj.mesh:
-                obj.mesh.select_set(True)
-
-        bpy.ops.export_scene.gltf(filepath=highpath, check_existing=False, use_selection=True, export_animations=False)
-
-        #select lods
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.context.scene.banter_pArmature.select_set(True)
-        bpy.context.scene.banter_pLod0Avatar.select_set(True)
-        bpy.context.scene.banter_pLod1Avatar.select_set(True)
-        bpy.context.scene.banter_pLod2Avatar.select_set(True)
-        bpy.context.scene.banter_pLod3Avatar.select_set(True)
-
-        bpy.ops.export_scene.gltf(filepath=lowpath, check_existing=False, use_selection=True, export_animations=False)
-
-        print("exported!")
-        bpy.context.scene.banter_bIsCurrentlyExporting = False
-        return {"FINISHED"}
 
 class Banter_OT_Dummy(bpy.types.Operator):
     bl_idname = "banter.dummy"
@@ -484,10 +521,6 @@ def register():
     # bpy.types.Scene.CodeProp = bpy.props.PointerProperty(type=CodeProp)
     bpy.types.Scene.banter_bIsCurrentlyExporting = bpy.props.BoolProperty(name='PluginIsCurrentlyExporting', description='', default=False)
 
-    bpy.types.Scene.banter_sLoginCode = bpy.props.StringProperty(name='6erCode', description='', default='XXXXXX', subtype='NONE', maxlen=0)
-    bpy.types.Scene.banter_bLoggedIn = bpy.props.BoolProperty(name='LoggedIn', description='', default=True)
-    bpy.types.Scene.banter_sUsername = bpy.props.StringProperty(name='UserName', description='', default='Ehleen', subtype='NONE', maxlen=0)
-
     bpy.types.Scene.banter_bPassed = bpy.props.BoolProperty(name='APassed', description='Test if the Avatar fullfils the requirements', default=False)
     # check props
     bpy.types.Scene.banter_bMeetsLocalLimit = bpy.props.BoolProperty(name='MeetsLocalLimit', description='Test if the Avatar is less than Local Limit', default=False)
@@ -505,6 +538,10 @@ def register():
     bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object)
     bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description='Shapekeys will be stripped', type=bpy.types.Object)
 
+    # export props
+    bpy.types.Scene.banter_sLocalExportPath = bpy.props.StringProperty(name='LocalExportPath', description='Local Export Path', default="", subtype='DIR_PATH')
+    bpy.types.Scene.banter_sLodExportPath = bpy.props.StringProperty(name='LodExportPath', description='Lod Export Path', default="", subtype='DIR_PATH')
+
 def unregister():
     global _icons
     bpy.utils.previews.remove(_icons)
@@ -515,10 +552,6 @@ def unregister():
     addon_keymaps.clear()
 
     del bpy.types.Scene.banter_bIsCurrentlyExporting
-
-    del bpy.types.Scene.banter_sUsername
-    del bpy.types.Scene.banter_bLoggedIn
-    del bpy.types.Scene.banter_sLoginCode
 
     # del bpy.types.Scene.CodeProp 
     del bpy.types.Scene.banter_bPassed
@@ -537,6 +570,9 @@ def unregister():
     del bpy.types.Scene.banter_pLod1Avatar
     del bpy.types.Scene.banter_pLod2Avatar
     del bpy.types.Scene.banter_pLod3Avatar
+
+    del bpy.types.Scene.banter_sLocalExportPath
+    del bpy.types.Scene.banter_sLodExportPath
 
     bpy.utils.unregister_class(banter_avatar_collection)
 
@@ -563,10 +599,11 @@ def unregister():
 #region glTF Hooks
 class glTF2ExportUserExtension:
     def __init__(self):
-        from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+        from io_scene_gltf2.io.com.gltf2_io_extensions import Extension # type: ignore
         self.Extension = Extension
     
     def gather_asset_hook(self, gltf2_asset, export_settings):
         if bpy.context.scene.banter_bIsCurrentlyExporting:
-            gltf2_asset.generator="Banter Avatar Creator"
+            v = bl_info["version"]
+            gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
 #endregion
