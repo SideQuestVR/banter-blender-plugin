@@ -13,7 +13,8 @@ import os
 from typing import List
 import bpy
 import bpy.utils.previews
-from .utils import combineMeshes, generateLOD, getMeshPolyCount, intToLod, getLodGroup, Lod
+from .utils import combineMeshes, generateLOD, getMeshTriCount, intToLod, getLodGroup, Lod
+from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
 
 addon_keymaps = {}
@@ -24,7 +25,7 @@ class banter_avatar_collection(bpy.types.PropertyGroup):
     mesh: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
 
 def getObjectsPolyCount(objects: List[banter_avatar_collection]):
-    return sum(getMeshPolyCount(obj.mesh) for obj in objects)
+    return sum(getMeshTriCount(obj.mesh) for obj in objects)
 
 class BANTER_UL_MeshList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -352,10 +353,10 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
 
     def execute(self, context):
         localCount = getObjectsPolyCount(bpy.context.scene.banter_cLocalAvatar) if bpy.context.scene.banter_cLocalAvatar else 1000000
-        lod0lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod0Avatar) if bpy.context.scene.banter_pLod0Avatar else 1000000)
-        lod1lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod1Avatar) if bpy.context.scene.banter_pLod1Avatar else 1000000)
-        lod2lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod2Avatar) if bpy.context.scene.banter_pLod2Avatar else 1000000)
-        lod3lodLevel = getLodGroup(getMeshPolyCount(bpy.context.scene.banter_pLod3Avatar) if bpy.context.scene.banter_pLod3Avatar else 1000000)
+        lod0lodLevel = getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod0Avatar) if bpy.context.scene.banter_pLod0Avatar else 1000000)
+        lod1lodLevel = getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod1Avatar) if bpy.context.scene.banter_pLod1Avatar else 1000000)
+        lod2lodLevel = getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod2Avatar) if bpy.context.scene.banter_pLod2Avatar else 1000000)
+        lod3lodLevel = getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod3Avatar) if bpy.context.scene.banter_pLod3Avatar else 1000000)
 
         bpy.context.scene.banter_bMeetsLocalLimit = (localCount <= Lod.LOCAL_LIMIT)
         bpy.context.scene.banter_bMeetsLod0 = (lod0lodLevel >= 0)

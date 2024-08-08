@@ -2,26 +2,6 @@ from enum import IntEnum
 import bmesh
 import bpy
 
-# LOCAL_LIMIT = 120000
-# LOD0 = 30000
-# LOD1 = 15000
-# LOD2 = 5000
-# LOD3 = 500
-
-# @dataclass
-# class Lod:
-#     PolyCount: int
-#     MergeDistance: float
-
-#     Lod0 = Lod(30000, 0.0)
-
-# class Lod():
-#     PolyCount: int
-#     MergeDistance: float
-
-#     @staticmethod
-#     Lod0():
-#         return Lod(30000, 0.0)
 class Lod(IntEnum):
     LOD3 = 1000
     LOD2 = 5000
@@ -42,28 +22,37 @@ def intToLod(lod: int) -> Lod:
     return Lod.LOD3
 
 def getLodGroup(polygonCount: int):
+    print("poly count", polygonCount)
     if polygonCount > Lod.LOD0:
+        print("gretaer than 0, main avatar or too big")
         return -1
     if polygonCount > Lod.LOD1:
+        print("gretaer than 1, lod0")
         return 0
     if polygonCount > Lod.LOD2:
+        print("gretaer than 2, lod1")
         return 1
     if polygonCount > Lod.LOD3:
+        print("gretaer than 3, lod2")
         return 2
+    print("gretaer than baseline, lod3")
     return 3
 
-def getScenePolyCount(scene: bpy.types.Scene):
+def getSceneTriCount(scene: bpy.types.Scene):
     # bpy.ops.object.mode_set(mode='EDIT')
     # bpy.ops.mesh.select_all(action='SELECT')  
     # bpy.ops.mesh.quads_convert_to_tris()
     # bpy.ops.object.mode_set(mode='OBJECT') 
 
-    return sum(getMeshPolyCount(obj) for obj in scene.objects)
+    return sum(getMeshTriCount(obj) for obj in scene.objects)
 
-def getMeshPolyCount(obj: bpy.types.Object):
+def getMeshTriCount(obj: bpy.types.Object):
+    total = 0
     if obj.type == 'MESH':
-        return len(obj.data.polygons)
-    return 0
+        for face in obj.data.polygons:
+            verts = face.vertices
+            total += len(verts) - 2
+    return total
 
 def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
     if obj and obj.type == 'MESH' and obj.data.shape_keys:
@@ -147,7 +136,7 @@ def combineMeshes(objList: list):
 def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False):
     # Get current triangle count
     sampleObj.update_from_editmode()
-    current_triangles = getMeshPolyCount(sampleObj)
+    current_triangles = getMeshTriCount(sampleObj)
 
     targetPolyCount = lodLevel.value
 
@@ -177,7 +166,7 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
 
         # if shape keys, remove the shape key count from the target count
         if shapeKeyObj:
-            shapeKeyCount = getMeshPolyCount(shapeKeyObj)
+            shapeKeyCount = getMeshTriCount(shapeKeyObj)
             targetPolyCount -= shapeKeyCount
 
         bpy.context.view_layer.objects.active = newLodObject
@@ -197,7 +186,7 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
         bpy.ops.object.modifier_apply(modifier=mod.name)
 
         # Refresh count after removing shape keys and triangulation
-        current_triangles = getMeshPolyCount(newLodObject)
+        current_triangles = getMeshTriCount(newLodObject)
 
         match lodLevel:
             case Lod.LOD0 | Lod.LOD1 | Lod.LOD2:
@@ -212,12 +201,12 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
                 bpy.ops.object.modifier_apply(modifier=mod.name)
                 # Weld
                 merge_threshold = 0.0
-                while getMeshPolyCount(newLodObject) > targetPolyCount:
+                while getMeshTriCount(newLodObject) > targetPolyCount:
                     merge_threshold += 0.005
                     mod = newLodObject.modifiers.new(name="Weld", type='WELD')
                     mod.merge_threshold = merge_threshold
                     bpy.ops.object.modifier_apply(modifier=mod.name)
-                    print(mod.merge_threshold, getMeshPolyCount(newLodObject))
+                    print(mod.merge_threshold, getMeshTriCount(newLodObject))
 
         # Merge shape keys back
         if shapeKeyObj:
