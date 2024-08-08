@@ -114,6 +114,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator):
         return bpy.context.scene.banter_bPassed
 
     def execute(self, context):
+        bpy.context.scene.banter_bIsCurrentlyExporting = True
         highpath = os.path.join(bpy.app.tempdir, "banter_avatar_high.glb")
         lowpath = os.path.join(bpy.app.tempdir, "banter_avatar_low.glb")
         print(highpath)
@@ -138,6 +139,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator):
         bpy.ops.export_scene.gltf(filepath=lowpath, check_existing=False, use_selection=True, export_animations=False)
 
         print("exported!")
+        bpy.context.scene.banter_bIsCurrentlyExporting = False
         return {"FINISHED"}
 
 #region Panels
@@ -486,7 +488,7 @@ def register():
 
 
     # bpy.types.Scene.CodeProp = bpy.props.PointerProperty(type=CodeProp)
-
+    bpy.types.Scene.banter_bIsCurrentlyExporting = bpy.props.BoolProperty(name='PluginIsCurrentlyExporting', description='', default=False)
 
     bpy.types.Scene.banter_sLoginCode = bpy.props.StringProperty(name='6erCode', description='', default='XXXXXX', subtype='NONE', maxlen=0)
     bpy.types.Scene.banter_bLoggedIn = bpy.props.BoolProperty(name='LoggedIn', description='', default=True)
@@ -517,6 +519,9 @@ def unregister():
     for km, kmi in addon_keymaps.values():
         km.keymap_items.remove(kmi)
     addon_keymaps.clear()
+
+    del bpy.types.Scene.banter_bIsCurrentlyExporting
+
     del bpy.types.Scene.banter_sUsername
     del bpy.types.Scene.banter_bLoggedIn
     del bpy.types.Scene.banter_sLoginCode
@@ -558,3 +563,12 @@ def unregister():
     bpy.utils.unregister_class(Banter_OT_GenerateMeshForLod)
     bpy.utils.unregister_class(Banter_OT_AddObjectToLocalAvatarList)
     bpy.utils.unregister_class(Banter_OT_RemoveObjectFromLocalAvatarList)
+
+class glTF2ExportUserExtension:
+    def __init__(self):
+        from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+        self.Extension = Extension
+    
+    def gather_asset_hook(self, gltf2_asset, export_settings):
+        if bpy.context.scene.banter_bIsCurrentlyExporting:
+            gltf2_asset.generator="Banter Avatar Creator"
