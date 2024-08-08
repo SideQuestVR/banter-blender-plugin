@@ -610,6 +610,8 @@ class glTF2ExportUserExtension:
     
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if bpy.context.scene.banter_bIsCurrentlyExporting:
+            #switch also covers duplicate lods, i.e. if lod1 can also meet
+            #the limits of lod2 and lod3, this will still work
             match blender_object.name:
                 case bpy.context.scene.banter_pLod0Avatar.name:
                     self.ensure_extras(gltf2_node)
