@@ -1,0 +1,13 @@
+schema_version = "1.0.0"
+id = "sidequest_banter_avatarcreator"
+name = "Banter Avatar Creator"
+version = "1.0.0"
+tagline = "Create and upload avatars to Banter"
+maintainer = "SideQuest"
+type = "add-on"
+permissions = { files = "Export and upload glb files to Banter" }
+tags = ["Import-Export", "Modeling"]
+blender_version_min = "4.2.0"
+license = ["SPDX:MIT"]
+website = "https://github.com/SideQuestVR/banter-blender-plugin"
+copyright = ["2024 SideQuest VR Ltd"]
