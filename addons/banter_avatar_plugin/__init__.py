@@ -607,4 +607,26 @@ class glTF2ExportUserExtension:
         if bpy.context.scene.banter_bIsCurrentlyExporting:
             v = bl_info["version"]
             gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
+    
+    def gather_node_hook(self, gltf2_node, blender_object, export_settings):
+        if bpy.context.scene.banter_bIsCurrentlyExporting:
+            match blender_object.name:
+                case bpy.context.scene.banter_pLod0Avatar.name:
+                    self.ensure_extras(gltf2_node)
+                    gltf2_node.extras["BANTER_avatar_lod"] = 0
+                case bpy.context.scene.banter_pLod1Avatar.name:
+                    self.ensure_extras(gltf2_node)
+                    gltf2_node.extras["BANTER_avatar_lod"] = 1
+                case bpy.context.scene.banter_pLod2Avatar.name:
+                    self.ensure_extras(gltf2_node)
+                    gltf2_node.extras["BANTER_avatar_lod"] = 2
+                case bpy.context.scene.banter_pLod3Avatar.name:
+                    self.ensure_extras(gltf2_node)
+                    gltf2_node.extras["BANTER_avatar_lod"] = 3
+                case _:
+                    pass
+    
+    def ensure_extras(self, gltf2_node):
+        if gltf2_node.extras is None:
+            gltf2_node.extras = {}
 #endregion
