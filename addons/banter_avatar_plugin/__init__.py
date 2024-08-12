@@ -293,10 +293,15 @@ class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
     
     def execute(self, context):
         for obj in context.selected_objects:
-            if obj.type == 'MESH':
-                item = context.scene.banter_cLocalAvatarObjects.add()
-                item.object = obj
+            self.add_recursive(obj)
         return {"FINISHED"}
+    
+    def add_recursive(self, obj):
+        if obj.type == 'MESH':
+            item = bpy.context.scene.banter_cLocalAvatarObjects.add()
+            item.object = obj
+        for child in obj.children:
+            self.add_recursive(child)
 
 class Banter_OT_RemoveObjectFromLocalAvatarList(bpy.types.Operator):
     bl_idname = "banter.remove_object_local_avatar"
