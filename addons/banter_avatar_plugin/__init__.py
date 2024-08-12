@@ -21,8 +21,14 @@ addon_keymaps = {}
 _icons = None
 sq_api = SqAppApi()
 
+def meshpointer_poll(self, object):
+    return object.type == 'MESH'
+
+def armaturepointer_poll(self, object):
+    return object.type == 'ARMATURE'
+
 class banter_avatar_collection(bpy.types.PropertyGroup):
-    object: bpy.props.PointerProperty(type=bpy.types.Object) # type: ignore
+    object: bpy.props.PointerProperty(type=bpy.types.Object, poll=meshpointer_poll) # type: ignore
 
 def getObjectsPolyCount(objects: List[banter_avatar_collection]):
     return sum(getMeshTriCount(item.object.data) for item in objects if item.object and item.object.type == 'MESH')
@@ -31,7 +37,7 @@ class BANTER_UL_MeshList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
 
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            layout.prop(item, "object", text="", emboss=False, )#icon_value=layout.icon(item.mesh.data))
+            layout.prop(item, "object", text="", emboss=False, icon="OUTLINER_DATA_MESH")
 
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
@@ -52,14 +58,14 @@ class BANTER_PT_Configurator(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-#region Armature
+        #Armature
         col = layout.column(heading='Armature')
         col.prop(context.scene, 'banter_pArmature', text='', icon='OUTLINER_OB_ARMATURE')
         if not bpy.context.scene.banter_pArmature:
             col.operator('banter.import_armature', text='Create Default Armature', icon_value=0, emboss=True, depress=False)
-#endregion
+
         layout.separator()
-#region Local Avatar
+        #Local Avatar
         col = layout.column()
         col.label(text="Local Avatar")
         if bpy.context.scene.banter_cLocalAvatarObjects and len(bpy.context.scene.banter_cLocalAvatarObjects) > 0:
@@ -68,16 +74,16 @@ class BANTER_PT_Configurator(bpy.types.Panel):
             meshcol = meshrow.column(align=True)
             meshcol.operator("banter.add_object_local_avatar", icon="ADD", text="")
             meshcol.operator("banter.remove_object_local_avatar", icon="REMOVE", text="")
-            layout.prop(context.scene, 'banter_pLocalHeadMesh', text='Head Mesh')
+            layout.prop(context.scene, 'banter_pLocalHeadMesh', text='Head Mesh', icon="OUTLINER_DATA_MESH")
         else:
             innercol = col.column(align=True)
             innercol.label(text='No Local Avatar Meshes')
             innercol.operator("banter.add_object_local_avatar", text="Use Selected Objects")
             innercol.operator('banter.dummy', text='Import RPM Avatar')
             innercol.operator('banter.dummy', text='Import Mixamo Avatar')
-#endregion
+
         layout.separator()
-#region LODs
+        #LODs
         aLodIsMissing = False
         col = layout.row(align=True)
         col.prop(context.scene, 'banter_pLod0Avatar', text='LOD0', icon="OUTLINER_DATA_MESH")
@@ -101,9 +107,9 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 
         if aLodIsMissing: 
             layout.operator('banter.genmissinglods', text='Create LODs from Local Avatar')
-#endregion
+
         layout.separator()
-        #region Shader
+        #Shader
         col = layout.column()
         col.prop(context.scene, 'banter_pShaderHint', text='Avatar Shader')
 
@@ -274,8 +280,11 @@ class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return (obj for obj in context.selected_objects if obj.type == 'MESH')
-
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                return True
+        return False
+    
     def execute(self, context):
         for obj in context.selected_objects:
             if obj.type == 'MESH':
@@ -532,20 +541,20 @@ def register():
     bpy.types.Scene.banter_bMeetsLod2 = bpy.props.BoolProperty(name='MeetsLod2', description='Test if the Avatar is less than LOD2', default=False)
     bpy.types.Scene.banter_bMeetsLod3 = bpy.props.BoolProperty(name='MeetsLod3', description='Test if the Avatar is less than LOD3', default=False)
 
-    bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object)
+    bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object, poll=armaturepointer_poll)
     bpy.types.Scene.banter_cLocalAvatarObjects = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
     bpy.types.Scene.banter_cLocalAvatarObjects_Active = bpy.props.IntProperty(name='LocalAvatarSelectedObject', description='', default=0)
     bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Object)
-    bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object)
-    bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object)
-    bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object)
-    bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description='Shapekeys will be stripped', type=bpy.types.Object)
+    bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
 
     bpy.types.Scene.banter_pShaderHint = bpy.props.EnumProperty(name='ShaderHint', description='Shader to use in Banter', items=[
         ('PBR', 'PBR', 'Default PBR'),
-        ('Toon', 'Toon', 'Toon shader'),
-        ('DIFFUSE', '(Fallback) Diffuse', 'Diffuse shader'),
-    ], default='DIFFUSE')
+        ('TOON', 'Toon', 'Toon shader'),
+        ('FALLBACK', '(Fallback) Diffuse', 'Default diffuse shader'),
+    ], default='FALLBACK')
 
     # export props
     bpy.types.Scene.banter_sLocalExportPath = bpy.props.StringProperty(name='LocalExportPath', description='Local Export Path', default="", subtype='DIR_PATH')
@@ -618,7 +627,7 @@ class glTF2ExportUserExtension:
             v = bl_info["version"]
             gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
             self.ensure_extras(gltf2_asset)
-            if bpy.context.scene.banter_pShaderHint:
+            if bpy.context.scene.banter_pShaderHint and bpy.context.scene.banter_pShaderHint != 'FALLBACK':
                 gltf2_asset.extras["BANTER_avatar_shader"] = bpy.context.scene.banter_pShaderHint
     
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
