@@ -13,7 +13,7 @@ import os
 from typing import List
 import bpy
 import bpy.utils.previews
-from .utils import combineMeshes, generateLOD, getMeshTriCount, intToLod, getLodGroup, Lod
+from .utils import combineObjects, generateLOD, getMeshTriCount, intToLod, getLodGroup, Lod
 from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
 
@@ -244,14 +244,13 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
 
     def execute(self, context):
 
-        meshes = []
+        objects = []
         for item in bpy.context.scene.banter_cLocalAvatarObjects:
             if item.object:
-                meshes.append(item.object)
+                objects.append(item.object)
 
-        targetObj = combineMeshes(meshes)
+        targetObj = combineObjects(objects)
         targetObj.name = 'Avatar_LOD' + str(self.lodLevel)
-        print(targetObj.name)
 
         lodObj = generateLOD(targetObj, intToLod(self.lodLevel), True, True if self.lodLevel == 0 else False)
 

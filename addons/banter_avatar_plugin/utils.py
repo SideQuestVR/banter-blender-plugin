@@ -21,7 +21,7 @@ def intToLod(lod: int) -> Lod:
         return Lod.LOD3
     return Lod.LOD3
 
-def getLodGroup(polygonCount: int):
+def getLodGroup(polygonCount: int) -> int:
     if polygonCount > Lod.LOD0:
         return -1
     if polygonCount > Lod.LOD1:
@@ -32,10 +32,10 @@ def getLodGroup(polygonCount: int):
         return 2
     return 3
 
-def getSceneTriCount(scene: bpy.types.Scene):
+def getSceneTriCount(scene: bpy.types.Scene) -> int:
     return sum(getMeshTriCount(obj.data) for obj in scene.objects if obj.type == 'MESH')
 
-def getMeshTriCount(mesh: bpy.types.Mesh):
+def getMeshTriCount(mesh: bpy.types.Mesh) -> int:
     total = 0
     for face in mesh.polygons:
         verts = face.vertices
@@ -100,7 +100,7 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
         print("No active mesh with shape keys found.")
         return None
     
-def combineMeshes(objList: list):
+def combineObjects(objList: list[bpy.types.Object]) -> bpy.types.Object:
     bpy.ops.object.select_all(action='DESELECT')
     
     copylist = []
@@ -121,7 +121,7 @@ def combineMeshes(objList: list):
 
     return bpy.context.view_layer.objects.active
 
-def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False):
+def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False) -> bpy.types.Object:
     # Get current triangle count
     sampleObj.update_from_editmode()
     current_triangles = getMeshTriCount(sampleObj.data)
