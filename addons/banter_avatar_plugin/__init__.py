@@ -27,6 +27,12 @@ def meshpointer_poll(self, object):
 def armaturepointer_poll(self, object):
     return object.type == 'ARMATURE'
 
+def headmesh_poll(self, object):
+    for item in bpy.context.scene.banter_cLocalAvatarObjects:
+        if item.object == object:
+            return True
+    return False
+
 class banter_avatar_collection(bpy.types.PropertyGroup):
     object: bpy.props.PointerProperty(type=bpy.types.Object, poll=meshpointer_poll) # type: ignore
 
@@ -544,7 +550,7 @@ def register():
     bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object, poll=armaturepointer_poll)
     bpy.types.Scene.banter_cLocalAvatarObjects = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
     bpy.types.Scene.banter_cLocalAvatarObjects_Active = bpy.props.IntProperty(name='LocalAvatarSelectedObject', description='', default=0)
-    bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Object)
+    bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Object, poll=headmesh_poll)
     bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object, poll=meshpointer_poll)
     bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
     bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
@@ -649,6 +655,10 @@ class glTF2ExportUserExtension:
                     gltf2_node.extras["BANTER_avatar_lod"] = 3
                 case _:
                     pass
+
+            if blender_object.name == bpy.context.scene.banter_pLocalHeadMesh.name:
+                self.ensure_extras(gltf2_node)
+                gltf2_node.extras["BANTER_avatar_component"] = "HEAD"
     
     def ensure_extras(self, gltf2_object):
         if gltf2_object.extras is None:
