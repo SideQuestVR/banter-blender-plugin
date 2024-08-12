@@ -133,35 +133,38 @@ class BANTER_PT_Validator(bpy.types.Panel):
             col.label(text='Not all checks are passing:')
 
             row = col.row()
-            row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon_value=36 if bpy.context.scene.banter_bMeetsLocalLimit else 33,)
+            row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLocalLimit))
             if not bpy.context.scene.banter_bMeetsLocalLimit:
                 pass
                 # op = row.operator('banter.genlod', text='Fix')
                 # op.lodLevel = -1
 
             row = col.row()
-            row.label(text=f'LOD0: {Lod.LOD0}', icon_value=36 if bpy.context.scene.banter_bMeetsLod0 else 33)
+            row.label(text=f'LOD0: {Lod.LOD0}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod0))
             if not bpy.context.scene.banter_bMeetsLod0:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 0
 
             row = col.row()
-            row.label(text=f'LOD1: {Lod.LOD1}', icon_value=36 if bpy.context.scene.banter_bMeetsLod1 else 33)
+            row.label(text=f'LOD1: {Lod.LOD1}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod1))
             if not bpy.context.scene.banter_bMeetsLod1:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 1
             
             row = col.row()
-            row.label(text=f'LOD2: {Lod.LOD2}', icon_value=36 if bpy.context.scene.banter_bMeetsLod2 else 33)
+            row.label(text=f'LOD2: {Lod.LOD2}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod2))
             if not bpy.context.scene.banter_bMeetsLod2:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 2
             
             row = col.row()
-            row.label(text=f'LOD3: {Lod.LOD3}', icon_value=36 if bpy.context.scene.banter_bMeetsLod3 else 33)
+            row.label(text=f'LOD3: {Lod.LOD3}', icon_value=self.icon_bool(context.scene.banter_bMeetsLod3))
             if not bpy.context.scene.banter_bMeetsLod3:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
+
+    def icon_bool(self, b: bool) -> int:
+        return 36 if b else 33
 
 class BANTER_PT_Exporter(bpy.types.Panel):
     bl_label = 'Export'
