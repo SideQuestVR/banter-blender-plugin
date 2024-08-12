@@ -1,12 +1,12 @@
 bl_info = {
     "name" : "Banter Avatar Creator",
-    "author" : "SideQuest", 
+    "author" : "SideQuest",
     "description" : "Create and upload avatars to Banter",
     "blender" : (4, 2, 0),
     "version" : (1, 0, 0),
     "location" : "View3D > Sidebar > BANTER",
-    "support": 'COMMUNITY', 
-    "category" : "3D View" 
+    "support": 'COMMUNITY',
+    "category" : "3D View"
 }
 
 import os
@@ -106,6 +106,10 @@ class BANTER_PT_Configurator(bpy.types.Panel):
         if aLodIsMissing: 
             layout.operator('banter.genmissinglods', text='Create missing remote Avatar LODs')
 #endregion
+        layout.separator()
+        #region Shader
+        col = layout.column()
+        col.prop(context.scene, 'banter_pShaderHint', text='Avatar Shader')
 
 class BANTER_PT_Validator(bpy.types.Panel):
     bl_label = 'Validator'
@@ -411,7 +415,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
     def poll(cls, context):
         return bpy.context.scene.banter_bPassed
 
-    def execute(self, context):        
+    def execute(self, context):
         try:
             path, ext = os.path.splitext(self.filepath)
             highpath = self.filepath
@@ -443,6 +447,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
             bpy.ops.export_scene.gltf(filepath=lowpath, check_existing=False, use_selection=True)
             bpy.context.scene.banter_sLodExportPath = lowpath
             bpy.context.scene.banter_bIsCurrentlyExporting = False
+            self.report({'INFO'}, "Avatar export complete.")
             return {"FINISHED"}
         except Exception:
             bpy.context.scene.banter_sLocalExportPath = ""
@@ -473,9 +478,8 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
         sq_api.upload_avatars(bpy.context.scene.banter_sLocalExportPath, bpy.context.scene.banter_sLodExportPath)
         bpy.context.scene.banter_sLocalExportPath = ""
         bpy.context.scene.banter_sLodExportPath = ""
+        self.report({'INFO'}, "Avatar upload complete.")
         return {"FINISHED"}
-
-
 
 class Banter_OT_Dummy(bpy.types.Operator):
     bl_idname = "banter.dummy"
@@ -538,6 +542,12 @@ def register():
     bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object)
     bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object)
     bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description='Shapekeys will be stripped', type=bpy.types.Object)
+
+    bpy.types.Scene.banter_pShaderHint = bpy.props.EnumProperty(name='ShaderHint', description='Shader to use in Banter', items=[
+        ('PBR', 'PBR', 'Default PBR'),
+        ('Toon', 'Toon', 'Toon shader'),
+        ('DIFFUSE', '(Fallback) Diffuse', 'Diffuse shader'),
+    ], default='DIFFUSE')
 
     # export props
     bpy.types.Scene.banter_sLocalExportPath = bpy.props.StringProperty(name='LocalExportPath', description='Local Export Path', default="", subtype='DIR_PATH')
@@ -607,6 +617,9 @@ class glTF2ExportUserExtension:
         if bpy.context.scene.banter_bIsCurrentlyExporting:
             v = bl_info["version"]
             gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
+            self.ensure_extras(gltf2_asset)
+            if bpy.context.scene.banter_pShaderHint:
+                gltf2_asset.extras["BANTER_avatar_shader"] = bpy.context.scene.banter_pShaderHint
     
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if bpy.context.scene.banter_bIsCurrentlyExporting:
@@ -628,7 +641,7 @@ class glTF2ExportUserExtension:
                 case _:
                     pass
     
-    def ensure_extras(self, gltf2_node):
-        if gltf2_node.extras is None:
-            gltf2_node.extras = {}
+    def ensure_extras(self, gltf2_object):
+        if gltf2_object.extras is None:
+            gltf2_object.extras = {}
 #endregion
