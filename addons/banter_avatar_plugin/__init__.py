@@ -582,6 +582,8 @@ def unregister():
     del bpy.types.Scene.banter_pLod2Avatar
     del bpy.types.Scene.banter_pLod3Avatar
 
+    del bpy.types.Scene.banter_pShaderHint
+
     del bpy.types.Scene.banter_sLocalExportPath
     del bpy.types.Scene.banter_sLodExportPath
 
