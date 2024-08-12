@@ -33,10 +33,10 @@ def headmesh_poll(self, object):
             return True
     return False
 
-class banter_avatar_collection(bpy.types.PropertyGroup):
+class BanterAvatarCollection(bpy.types.PropertyGroup):
     object: bpy.props.PointerProperty(type=bpy.types.Object, poll=meshpointer_poll) # type: ignore
 
-def getObjectsPolyCount(objects: List[banter_avatar_collection]):
+def getObjectsPolyCount(objects: List[BanterAvatarCollection]):
     return sum(getMeshTriCount(item.object.data) for item in objects if item.object and item.object.type == 'MESH')
 
 class BANTER_UL_MeshList(bpy.types.UIList):
@@ -532,7 +532,7 @@ def register():
     bpy.utils.register_class(Banter_OT_AddObjectToLocalAvatarList)
     bpy.utils.register_class(Banter_OT_RemoveObjectFromLocalAvatarList)
 
-    bpy.utils.register_class(banter_avatar_collection)
+    bpy.utils.register_class(BanterAvatarCollection)
 
 
 
@@ -548,7 +548,7 @@ def register():
     bpy.types.Scene.banter_bMeetsLod3 = bpy.props.BoolProperty(name='MeetsLod3', description='Test if the Avatar is less than LOD3', default=False)
 
     bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object, poll=armaturepointer_poll)
-    bpy.types.Scene.banter_cLocalAvatarObjects = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=banter_avatar_collection)
+    bpy.types.Scene.banter_cLocalAvatarObjects = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=BanterAvatarCollection)
     bpy.types.Scene.banter_cLocalAvatarObjects_Active = bpy.props.IntProperty(name='LocalAvatarSelectedObject', description='', default=0)
     bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Object, poll=headmesh_poll)
     bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object, poll=meshpointer_poll)
@@ -600,7 +600,7 @@ def unregister():
     del bpy.types.Scene.banter_sLocalExportPath
     del bpy.types.Scene.banter_sLodExportPath
 
-    bpy.utils.unregister_class(banter_avatar_collection)
+    bpy.utils.unregister_class(BanterAvatarCollection)
 
     bpy.utils.unregister_class(BANTER_PT_Exporter)
     bpy.utils.unregister_class(BANTER_PT_Configurator)
