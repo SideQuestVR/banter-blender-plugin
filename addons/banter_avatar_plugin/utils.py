@@ -10,27 +10,29 @@ class Lod(IntEnum):
 
     LOCAL_LIMIT = 120000
 
-def intToLod(lod: int) -> Lod:
-    if lod == 0:
-        return Lod.LOD0
-    if lod == 1:
-        return Lod.LOD1
-    if lod == 2:
-        return Lod.LOD2
-    if lod == 3:
+    @staticmethod
+    def intToLod(lod: int) -> 'Lod':
+        if lod == 0:
+            return Lod.LOD0
+        if lod == 1:
+            return Lod.LOD1
+        if lod == 2:
+            return Lod.LOD2
+        if lod == 3:
+            return Lod.LOD3
         return Lod.LOD3
-    return Lod.LOD3
 
-def getLodGroup(polygonCount: int) -> int:
-    if polygonCount > Lod.LOD0:
-        return -1
-    if polygonCount > Lod.LOD1:
-        return 0
-    if polygonCount > Lod.LOD2:
-        return 1
-    if polygonCount > Lod.LOD3:
-        return 2
-    return 3
+    @staticmethod
+    def getLodGroup(polygonCount: int) -> int:
+        if polygonCount > Lod.LOD0:
+            return -1
+        if polygonCount > Lod.LOD1:
+            return 0
+        if polygonCount > Lod.LOD2:
+            return 1
+        if polygonCount > Lod.LOD3:
+            return 2
+        return 3
 
 def getSceneTriCount(scene: bpy.types.Scene) -> int:
     return sum(getMeshTriCount(obj.data) for obj in scene.objects if obj.type == 'MESH')
