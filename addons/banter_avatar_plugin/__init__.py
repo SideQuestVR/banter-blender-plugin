@@ -435,6 +435,12 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
 
     def execute(self, context):
         try:
+            #Double check for tricky people
+            bpy.ops.banter.precheck("INVOKE_DEFAULT")
+            if not bpy.context.scene.banter_bPassed:
+                self.report({'ERROR'}, "Precheck failed. Please fix the issues before exporting.")
+                return {"CANCELLED"}
+            
             path, ext = os.path.splitext(self.filepath)
             highpath = self.filepath
             lowpath = path + f"_lods{ext}"
