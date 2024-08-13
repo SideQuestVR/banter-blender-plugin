@@ -48,6 +48,9 @@ class BANTER_UL_MeshList(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
 
+    def draw_filter(self, context, layout):
+        pass
+
 #region Panels
 class BANTER_PT_Configurator(bpy.types.Panel):
     bl_label = 'Avatar Configurator'
@@ -57,10 +60,6 @@ class BANTER_PT_Configurator(bpy.types.Panel):
     bl_context = ''
     bl_category = 'BANTER'
 
-    @classmethod
-    def poll(cls, context):
-        return True
-
     def draw(self, context):
         layout = self.layout
 
@@ -68,7 +67,7 @@ class BANTER_PT_Configurator(bpy.types.Panel):
         col = layout.column(heading='Armature')
         col.prop(context.scene, 'banter_pArmature', text='', icon='OUTLINER_OB_ARMATURE')
         if not bpy.context.scene.banter_pArmature:
-            col.operator('banter.import_armature', text='Create Default Armature', icon_value=0, emboss=True, depress=False)
+            col.operator('banter.import_armature', text='Create Default Armature')
 
         layout.separator()
         #Local Avatar
@@ -128,18 +127,14 @@ class BANTER_PT_Validator(bpy.types.Panel):
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
 
-    @classmethod
-    def draw(self, context):
-        return True
-    
     def draw(self, context):
         layout = self.layout
 
-        col = layout.column(heading='', align=True)
-        op = col.operator('banter.precheck', text='Recheck Requirements', icon_value=0, emboss=True, depress=False)
+        col = layout.column(align=True)
+        op = col.operator('banter.precheck', text='Recheck Requirements')
 
         if bpy.context.scene.banter_bPassed:
-            col.label(text='Passed', icon_value=36)
+            col.label(text='Passed', icon="CHECKMARK")
         else:
             col = col.column(align=True)
             col.label(text='Not all checks are passing:')
@@ -154,25 +149,25 @@ class BANTER_PT_Validator(bpy.types.Panel):
                 pass
 
             row = col.row()
-            row.label(text=f'LOD0: {Lod.LOD0}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod0))
+            row.label(text=f'LOD0: {Lod.LOD0}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod0))
             if not bpy.context.scene.banter_bMeetsLod0:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 0
 
             row = col.row()
-            row.label(text=f'LOD1: {Lod.LOD1}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod1))
+            row.label(text=f'LOD1: {Lod.LOD1}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod1))
             if not bpy.context.scene.banter_bMeetsLod1:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 1
             
             row = col.row()
-            row.label(text=f'LOD2: {Lod.LOD2}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod2))
+            row.label(text=f'LOD2: {Lod.LOD2}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod2))
             if not bpy.context.scene.banter_bMeetsLod2:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 2
             
             row = col.row()
-            row.label(text=f'LOD3: {Lod.LOD3}', icon_value=self.icon_bool(context.scene.banter_bMeetsLod3))
+            row.label(text=f'LOD3: {Lod.LOD3}', icon=self.icon_bool(context.scene.banter_bMeetsLod3))
             if not bpy.context.scene.banter_bMeetsLod3:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
@@ -180,7 +175,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
             col.label(text='No Head Mesh Selected', icon="ERROR")
 
     def icon_bool(self, b: bool) -> int:
-        return 36 if b else 33
+        return "CHECKMARK" if b else "PANEL_CLOSE"
 
 class BANTER_PT_Exporter(bpy.types.Panel):
     bl_label = 'Export'
@@ -191,30 +186,25 @@ class BANTER_PT_Exporter(bpy.types.Panel):
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
     _timer = None
-
-    @classmethod
-    def draw(self, context):
-        return True
     
     def draw(self, context):
         layout = self.layout
         if(sq_api.user is None):
-            col = layout.column(heading='', align=False)
-            # op = col.operator('banter.login', text='(Fake Login)', icon_value=0, depress=False)
-            col.label(text='To Sign In: ' , icon_value=0)
-            col.label(text='Go to ' + sq_api.login_code.verification_url , icon_value=0)
-            col.label(text='and put in ' + sq_api.login_code.code , icon_value=0)
+            col = layout.column()
+            col.label(text='To Sign In: ')
+            col.label(text='Go to ' + sq_api.login_code.verification_url)
+            col.label(text='and put in ' + sq_api.login_code.code)
             # props = bpy.context.scene.CodeProp
             # col.prop(props, "code", text=sq_api.login_code.code)
-            col.label(text='Please allow up to 10s after you enter the code.' , icon_value=0)
-            op = col.operator('banter.open_url', text='Open Page', icon_value=0, emboss=True, depress=False)
+            col.label(text='Please allow up to 10s after you enter the code.')
+            op = col.operator('banter.open_url', text='Open Page')
             op.url = "https://links.sidetestvr.com/link"
         else:
-            col = layout.column(heading='', align=False)
-            col.label(text='Logged in as ' + sq_api.user.name, icon_value=0)
-            op = col.operator('banter.export_avatars', text='Export Avatars', icon_value=0, emboss=True, depress=False)
-            op = col.operator('banter.upload_avatars', text='Export & Upload Avatars', icon_value=0, emboss=True, depress=False)
-            op = col.operator('banter.logout', text='Logout', icon_value=0, emboss=True, depress=False)
+            col = layout.column()
+            col.label(text='Logged in as ' + sq_api.user.name)
+            op = col.operator('banter.export_avatars', text='Export Avatars')
+            op = col.operator('banter.upload_avatars', text='Export & Upload Avatars')
+            op = col.operator('banter.logout', text='Logout')
 #endregion
 
 #region Operators
@@ -327,7 +317,7 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
     bl_description = ""
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    url: bpy.props.StringProperty(name='URL', description='', default='') # type: ignore
+    url: bpy.props.StringProperty(name='URL') # type: ignore
 
     @classmethod
     def poll(cls, context):
@@ -344,10 +334,6 @@ class Banter_OT_ImportArmature(bpy.types.Operator):
     bl_idname = "banter.import_armature"
     bl_label = "Import Banter Armature"
     bl_description = "Imports the default Banter armature"
-
-    @classmethod
-    def poll(cls, context):
-        return True
     
     def execute(self, context):
         script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -370,12 +356,6 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
     bl_label = "Precheck"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        if bpy.app.version >= (3, 0, 0) and True:
-            cls.poll_message_set('')
-        return not False
 
     def execute(self, context):
         localCount = getObjectsPolyCount(bpy.context.scene.banter_cLocalAvatarObjects) if bpy.context.scene.banter_cLocalAvatarObjects else 1000000
@@ -406,10 +386,6 @@ class Banter_OT_LogOut(bpy.types.Operator):
     bl_description = ""
     bl_options = {"REGISTER"}
 
-    @classmethod
-    def poll(cls, context):
-        return True
-
     def execute(self, context):
         sq_api.logout()
         return {"FINISHED"}
@@ -419,10 +395,6 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
     bl_label = "Export Avatars"
     bl_description = ""
     bl_options = {"REGISTER"}
-
-    #directory: bpy.props.StringProperty(subtype='DIR_PATH') # type: ignore
-    #filename: bpy.props.StringProperty(subtype= default="banter_avatar.glb") # type: ignore
-    #filepath = bpy.props.StringProperty(subtype='FILE_PATH', default="banter_avatar.glb") # type: ignore
 
     filter_glob: bpy.props.StringProperty(default='*.glb', options={'HIDDEN'}) # type: ignore
     filename_ext = '.glb'
@@ -518,7 +490,6 @@ class Banter_OT_Dummy(bpy.types.Operator):
         return False
 
     def execute(self, context):
-
         return {"FINISHED"}
 #endregion
 
