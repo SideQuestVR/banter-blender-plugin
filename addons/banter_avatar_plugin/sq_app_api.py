@@ -124,7 +124,12 @@ class SqAppApi:
             'Content-Type': 'application/octet-stream'
         })
         low_file.close()
-
+        
+        print("/v2/users/me/avatar/files", json.dumps({
+            "high_avatar_files_id": create_upload_high["fileId"],
+            "low_avatar_files_id": create_upload_low["fileId"],
+            "is_public": True
+        }))
         set_avatar = self.json_post("/v2/users/me/avatar/files", False, True, json.dumps({
             "high_avatar_files_id": create_upload_high["fileId"],
             "low_avatar_files_id": create_upload_low["fileId"],
@@ -150,7 +155,10 @@ class SqAppApi:
         conn.request(method, path, body, headers)
         res = conn.getresponse()
         data = res.read()
-        if(res.status != 204):
+        print(res.status, str(res.status)[:1]);
+        if(str(res.status)[:1] == "4"):
+            raise Exception("API Error: " + json.loads(data.decode("utf-8"))["detail"])
+        elif(res.status != 204):
             return data.decode("utf-8")
 
 

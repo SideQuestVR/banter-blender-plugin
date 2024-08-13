@@ -409,6 +409,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
 
     def execute(self, context):
         try:
+            self.report({'INFO'}, "Avatar export started...")
             #Double check for tricky people
             bpy.ops.banter.precheck("INVOKE_DEFAULT")
             if not bpy.context.scene.banter_bPassed:
@@ -473,10 +474,16 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        sq_api.upload_avatars(bpy.context.scene.banter_sLocalExportPath, bpy.context.scene.banter_sLodExportPath)
+        try:
+            self.report({'INFO'}, "Upload started...")
+            sq_api.upload_avatars(bpy.context.scene.banter_sLocalExportPath, bpy.context.scene.banter_sLodExportPath)
+            self.report({'INFO'}, "Avatar upload complete.")
+        except Exception as e:
+            print(e)
+            self.report({'INFO'}, str(e))
+            
         bpy.context.scene.banter_sLocalExportPath = ""
         bpy.context.scene.banter_sLodExportPath = ""
-        self.report({'INFO'}, "Avatar upload complete.")
         return {"FINISHED"}
 
 class Banter_OT_Dummy(bpy.types.Operator):
