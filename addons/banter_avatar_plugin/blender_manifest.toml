@@ -5,7 +5,7 @@ version = "1.0.0"
 tagline = "Configure and upload custom avatars for the Bantaverse"
 maintainer = "SideQuest"
 type = "add-on"
-permissions = { files = "Export and upload glb files to Banter" }
+permissions = { files = "Export glTF avatars", network = "Upload avatars to Banter" }
 tags = ["Import-Export", "Modeling"]
 blender_version_min = "4.2.0"
 license = ["SPDX:MIT"]
