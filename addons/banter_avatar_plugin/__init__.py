@@ -145,11 +145,13 @@ class BANTER_PT_Validator(bpy.types.Panel):
             col.label(text='Not all checks are passing:')
 
             row = col.row()
-            row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLocalLimit))
+            present = bpy.context.scene.banter_pArmature is not None
+            row.label(text=f"Armature is {'' if present else 'not '}set", icon=self.icon_bool(bpy.context.scene.banter_pArmature))
+
+            row = col.row()
+            row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLocalLimit))
             if not bpy.context.scene.banter_bMeetsLocalLimit:
                 pass
-                # op = row.operator('banter.genlod', text='Fix')
-                # op.lodLevel = -1
 
             row = col.row()
             row.label(text=f'LOD0: {Lod.LOD0}', icon_value=self.icon_bool(bpy.context.scene.banter_bMeetsLod0))
@@ -389,15 +391,13 @@ class Banter_OT_PerformPrecheck(bpy.types.Operator):
         bpy.context.scene.banter_bMeetsLod3 = (lod3lodLevel >= 3)
 
         bpy.context.scene.banter_bPassed = \
+            bpy.context.scene.banter_bMeetsLocalLimit and \
             bpy.context.scene.banter_bMeetsLod0 and \
             bpy.context.scene.banter_bMeetsLod1 and \
             bpy.context.scene.banter_bMeetsLod2 and \
-            bpy.context.scene.banter_bMeetsLod3
-
-        # if bpy.context.scene.banter_bPassed:
-        #     bpy.context.scene.banter_bPassed = (not bpy.context.scene.banter_bPassed)
-        # else:
-        #     bpy.context.scene.banter_bPassed = (not bpy.context.scene.banter_bPassed)
+            bpy.context.scene.banter_bMeetsLod3 and \
+            bpy.context.scene.banter_pArmature is not None
+        
         return {"FINISHED"}
 
 class Banter_OT_LogOut(bpy.types.Operator):
