@@ -1,8 +1,8 @@
 schema_version = "1.0.0"
-id = "sidequest_banter_avatarcreator"
-name = "Banter Avatar Creator"
+id = "sidequest_banter_avatars"
+name = "Banter Avatar Configurator"
 version = "1.0.0"
-tagline = "Create and upload avatars to Banter"
+tagline = "Configure and upload custom avatars for the Bantaverse"
 maintainer = "SideQuest"
 type = "add-on"
 permissions = { files = "Export and upload glb files to Banter" }

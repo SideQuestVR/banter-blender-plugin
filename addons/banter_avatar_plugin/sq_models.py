@@ -1,6 +1,6 @@
+import os
 import json
 from datetime import datetime, timedelta
-import os
 
 class SqTokenInfo:
     def __init__(self, token):

@@ -1,7 +1,7 @@
 bl_info = {
-    "name" : "Banter Avatar Creator",
+    "name" : "Banter Avatar Configurator",
     "author" : "SideQuest",
-    "description" : "Create and upload avatars to Banter",
+    "description" : "Configure and upload custom avatars for the Bantaverse",
     "blender" : (4, 2, 0),
     "version" : (1, 0, 0),
     "location" : "View3D > Sidebar > BANTER",
@@ -13,9 +13,9 @@ import os
 from typing import List
 import bpy
 import bpy.utils.previews
-from .utils import combineObjects, generateLOD, getMeshTriCount, Lod
 from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
+from .utils import Lod, combineObjects, generateLOD, getMeshTriCount
 
 addon_keymaps = {}
 _icons = None

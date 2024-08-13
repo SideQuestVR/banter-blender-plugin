@@ -1,12 +1,11 @@
-import json
 import os
+import json
 import http.client
 from datetime import datetime, timedelta
-import bpy
-from .sq_models import *
-from .sq_exceptions import *
 from threading import Timer
 from urllib.parse import *
+from .sq_models import *
+from .sq_exceptions import *
 
 class SqAppApi:
     def __init__(self):
@@ -201,7 +200,7 @@ class SqAppApi:
             return False, None
 
         if self.login_code is None:
-            raise InvalidOperationException("There is not a code login in progress")
+            raise Exception("There is not a code login in progress")
         
         if datetime.utcnow() > self.login_code.expires_at:
             return False, None
