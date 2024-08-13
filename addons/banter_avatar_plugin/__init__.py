@@ -475,13 +475,12 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            self.report({'INFO'}, "Upload started...")
             sq_api.upload_avatars(bpy.context.scene.banter_sLocalExportPath, bpy.context.scene.banter_sLodExportPath)
             self.report({'INFO'}, "Avatar upload complete.")
         except Exception as e:
             print(e)
             self.report({'INFO'}, str(e))
-            
+
         bpy.context.scene.banter_sLocalExportPath = ""
         bpy.context.scene.banter_sLodExportPath = ""
         return {"FINISHED"}
