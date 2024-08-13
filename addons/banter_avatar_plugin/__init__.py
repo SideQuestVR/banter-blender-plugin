@@ -174,6 +174,8 @@ class BANTER_PT_Validator(bpy.types.Panel):
             if not bpy.context.scene.banter_bMeetsLod3:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
+        if not bpy.context.scene.banter_pLocalHeadMesh:
+            col.label(text='No Head Mesh Selected', icon="ERROR")
 
     def icon_bool(self, b: bool) -> int:
         return 36 if b else 33
@@ -667,9 +669,10 @@ class glTF2ExportUserExtension:
                 case _:
                     pass
 
-            if blender_object.name == bpy.context.scene.banter_pLocalHeadMesh.name:
-                self.ensure_extras(gltf2_node)
-                gltf2_node.extras["BANTER_avatar_component"] = "HEAD"
+            if bpy.context.scene.banter_pLocalHeadMesh:
+                if blender_object.name == bpy.context.scene.banter_pLocalHeadMesh.name:
+                    self.ensure_extras(gltf2_node)
+                    gltf2_node.extras["BANTER_avatar_component"] = "HEAD"
     
     def ensure_extras(self, gltf2_object):
         if gltf2_object.extras is None:
