@@ -622,8 +622,8 @@ class glTF2ExportUserExtension:
         if bpy.context.scene.banter_bIsCurrentlyExporting:
             v = bl_info["version"]
             gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
-            self.ensure_extras(gltf2_asset)
             if bpy.context.scene.banter_pShaderHint and bpy.context.scene.banter_pShaderHint != 'FALLBACK':
+                self.ensure_extras(gltf2_asset)
                 gltf2_asset.extras["BANTER_avatar_shader"] = bpy.context.scene.banter_pShaderHint
     
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
