@@ -115,8 +115,8 @@ class BANTER_PT_Configurator(bpy.types.Panel):
 
         layout.separator()
         #Shader
-        col = layout.column()
-        col.prop(context.scene, 'banter_pShaderHint', text='Avatar Shader')
+        # col = layout.column()
+        # col.prop(context.scene, 'banter_pShaderHint', text='Avatar Shader')
 
 class BANTER_PT_Validator(bpy.types.Panel):
     bl_label = 'Validator'
