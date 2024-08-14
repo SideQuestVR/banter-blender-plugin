@@ -6,6 +6,9 @@ from threading import Timer
 from urllib.parse import *
 from .sq_models import *
 from .sq_exceptions import *
+import bpy
+
+PLUGIN_ID = "banter_avatar_plugin"
 
 class SqAppApi:
     def __init__(self):
@@ -14,7 +17,7 @@ class SqAppApi:
         self.token = None
         client_id = "client_85b087d9975cb8ca5bb575a2" # test
         # client_id = "client_0e4c67f9a6bbe12143870312" # prod
-        self.config = SqAppApiConfig(client_id, os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources"), True, "sqappapi.json")
+        self.config = SqAppApiConfig(client_id, bpy.utils.user_resource('EXTENSIONS', path=PLUGIN_ID, create=True), True, "sqappapi.json")
         self.load_data()
 
     def save_data(self):
