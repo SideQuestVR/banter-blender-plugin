@@ -15,6 +15,7 @@ def get_version_string():
 import os
 from typing import List
 import bpy
+from bpy.types import Context
 import bpy.utils.previews
 from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
@@ -189,7 +190,7 @@ class BANTER_PT_Exporter(bpy.types.Panel):
     bl_category = 'BANTER'
     bl_options = {"DEFAULT_CLOSED"}
     _timer = None
-    
+
     def draw(self, context):
         layout = self.layout
         if(sq_api.user is None):
@@ -205,8 +206,8 @@ class BANTER_PT_Exporter(bpy.types.Panel):
         else:
             col = layout.column()
             col.label(text='Logged in as ' + sq_api.user.name)
-            op = col.operator('banter.export_avatars', text='Export Avatars')
             op = col.operator('banter.upload_avatars', text='Export & Upload Avatars')
+            op = col.operator('banter.export_avatars', text='Export Avatars Only')
             op = col.operator('banter.logout', text='Logout')
 #endregion
 
@@ -472,8 +473,6 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
         return {'RUNNING_MODAL'}
     
     def modal(self, context, event):
-        if bpy.context.scene.banter_sLocalExportPath and bpy.context.scene.banter_sLodExportPath:
-            return self.execute(context)
         return {'PASS_THROUGH'}
 
     def execute(self, context):
