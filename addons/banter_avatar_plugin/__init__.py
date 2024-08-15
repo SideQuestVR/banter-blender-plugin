@@ -167,7 +167,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
                 op.lodLevel = 2
             
             row = col.row()
-            row.label(text=f'LOD3: {Lod.LOD3}', icon=self.icon_bool(context.scene.banter_bMeetsLod3))
+            row.label(text=f'LOD3: {Lod.LOD3}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod3))
             if not bpy.context.scene.banter_bMeetsLod3:
                 op = row.operator('banter.genlod', text='Fix')
                 op.lodLevel = 3
