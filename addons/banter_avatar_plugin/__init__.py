@@ -9,6 +9,9 @@ bl_info = {
     "category" : "3D View"
 }
 
+def get_version_string():
+    return str(bl_info['version'][0]) + '.' + str(bl_info['version'][1]) + '.' + str(bl_info['version'][2])
+
 import os
 from typing import List
 import bpy
@@ -621,7 +624,7 @@ class glTF2ExportUserExtension:
     def gather_asset_hook(self, gltf2_asset, export_settings):
         if bpy.context.scene.banter_bIsCurrentlyExporting:
             v = bl_info["version"]
-            gltf2_asset.generator=f"Banter Avatar Creator v{v[0]}.{v[1]}.{v[2]}"
+            gltf2_asset.generator = "Banter Avatar Creator v" + get_version_string() 
             if bpy.context.scene.banter_pShaderHint and bpy.context.scene.banter_pShaderHint != 'FALLBACK':
                 self.ensure_extras(gltf2_asset)
                 gltf2_asset.extras["BANTER_avatar_shader"] = bpy.context.scene.banter_pShaderHint
