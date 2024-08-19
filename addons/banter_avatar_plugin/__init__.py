@@ -195,6 +195,7 @@ class BANTER_PT_Exporter(bpy.types.Panel):
         layout = self.layout
         if(sq_api.user is None):
             col = layout.column()
+            op = col.operator('banter.export_avatars', text='Export Avatars')
             col.label(text='To Sign In: ')
             col.label(text='Go to ' + sq_api.login_code.verification_url)
             col.label(text='and put in ' + sq_api.login_code.code)
