@@ -135,7 +135,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
         layout = self.layout
 
         col = layout.column(align=True)
-        op = col.operator('banter.precheck', text='Recheck Requirements')
+        op = col.operator('banter.validator', text='Run Validator')
 
         if bpy.context.scene.banter_bPassed:
             col.label(text='Passed', icon="CHECKMARK")
@@ -355,9 +355,9 @@ class Banter_OT_ImportArmature(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class Banter_OT_PerformPrecheck(bpy.types.Operator):
-    bl_idname = "banter.precheck"
-    bl_label = "Precheck"
+class Banter_OT_RunValidator(bpy.types.Operator):
+    bl_idname = "banter.validator"
+    bl_label = "Validator"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
 
@@ -415,7 +415,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
         try:
             self.report({'INFO'}, "Avatar export started...")
             #Double check for tricky people
-            bpy.ops.banter.precheck("INVOKE_DEFAULT")
+            bpy.ops.banter.validator("INVOKE_DEFAULT")
             if not bpy.context.scene.banter_bPassed:
                 self.report({'ERROR'}, "Precheck failed. Please fix the issues before exporting.")
                 return {"CANCELLED"}
@@ -518,7 +518,7 @@ def register():
     bpy.utils.register_class(Banter_OT_ExportAvatars)
     bpy.utils.register_class(Banter_OT_OpenUrl)
     bpy.utils.register_class(Banter_OT_ImportArmature)
-    bpy.utils.register_class(Banter_OT_PerformPrecheck)
+    bpy.utils.register_class(Banter_OT_RunValidator)
     bpy.utils.register_class(Banter_OT_GenerateMissingLods)
     bpy.utils.register_class(Banter_OT_GenerateMeshForLod)
     bpy.utils.register_class(Banter_OT_AddObjectToLocalAvatarList)
@@ -606,7 +606,7 @@ def unregister():
     bpy.utils.unregister_class(Banter_OT_ExportAvatars)
     bpy.utils.unregister_class(Banter_OT_OpenUrl)
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
-    bpy.utils.unregister_class(Banter_OT_PerformPrecheck)
+    bpy.utils.unregister_class(Banter_OT_RunValidator)
     bpy.utils.unregister_class(Banter_OT_GenerateMissingLods)
     bpy.utils.unregister_class(Banter_OT_GenerateMeshForLod)
     bpy.utils.unregister_class(Banter_OT_AddObjectToLocalAvatarList)
