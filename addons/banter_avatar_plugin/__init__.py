@@ -3,7 +3,7 @@ bl_info = {
     "author" : "SideQuest",
     "description" : "Configure and upload custom avatars for the Bantaverse",
     "blender" : (4, 2, 0),
-    "version" : (1, 0, 0),
+    "version" : (0, 1, 0),
     "location" : "View3D > Sidebar > BANTER",
     "support": 'COMMUNITY',
     "category" : "3D View"
