@@ -2,6 +2,7 @@ import os
 import json
 from datetime import datetime, timedelta
 
+
 class SqTokenInfo:
     def __init__(self, token):
         self.refresh_token = token["refresh_token"]
@@ -12,6 +13,7 @@ class SqTokenInfo:
         self.user_id = token["users_id"]
         self.app_id = token["apps_id"]
         self.granted_scopes = token["scopes"]
+
 
 class SqAuthScopes:
     READ_BASIC_PROFILE = "user.basic_profile.read"
@@ -27,6 +29,7 @@ class SqAuthScopes:
     USER_MESSAGE_HISTORY = "user.messagehistory.read"
     USER_AVATAR_WRITE = "user.avatars.write"
 
+
 class SqLoginCode:
     def __init__(self):
         self.code = None
@@ -35,10 +38,12 @@ class SqLoginCode:
         self.poll_interval_seconds = None
         self.verification_url = None
 
+
 class SqCreateUploadDone:
     def __init__(self):
         self.file_id = None
         self.name = None
+
 
 class SqCreateUploadRequest:
     def __init__(self):
@@ -47,6 +52,7 @@ class SqCreateUploadRequest:
         self.size = None
         self.type = None
 
+
 class SqCreateUpload:
     def __init__(self):
         self.file_id = None
@@ -54,20 +60,24 @@ class SqCreateUpload:
         self.upload_uri = None
         self.communities_id = None
 
+
 class SqUser:
     def __init__(self, user):
         self.user_id = user["users_id"]
         self.name = user["name"]
 
+
 class SqAppApiConfig:
-    def __init__(self, client_id, data_path, test_mode=True, data_file_name="sqappapi.json"):
+    def __init__(
+        self, client_id, data_path, test_mode=True, data_file_name="sqappapi.json"
+    ):
         if not os.path.exists(data_path):
             raise FileNotFoundError("Specified data path does not exist")
         if not data_file_name:
             raise ValueError("data_file_name must be provided.")
         if not client_id:
             raise ValueError("client_id must be specified")
-        
+
         self.data_path = data_path
         self.data_file_name = data_file_name
         self.root_api_uri = "api.sidetestvr.com" if test_mode else "api.sidequestvr.com"

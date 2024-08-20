@@ -2,6 +2,7 @@ from enum import IntEnum
 import bmesh
 import bpy
 
+
 class Lod(IntEnum):
     LOD3 = 1000
     LOD2 = 5000
@@ -11,7 +12,7 @@ class Lod(IntEnum):
     LOCAL_LIMIT = 120000
 
     @staticmethod
-    def intToLod(lod: int) -> 'Lod':
+    def intToLod(lod: int) -> "Lod":
         if lod == 0:
             return Lod.LOD0
         if lod == 1:
@@ -34,8 +35,10 @@ class Lod(IntEnum):
             return 2
         return 3
 
+
 def getSceneTriCount(scene: bpy.types.Scene) -> int:
-    return sum(getMeshTriCount(obj.data) for obj in scene.objects if obj.type == 'MESH')
+    return sum(getMeshTriCount(obj.data) for obj in scene.objects if obj.type == "MESH")
+
 
 def getMeshTriCount(mesh: bpy.types.Mesh) -> int:
     total = 0
@@ -44,13 +47,15 @@ def getMeshTriCount(mesh: bpy.types.Mesh) -> int:
         total += len(verts) - 2
     return total
 
+
 def getMaterialCount(obj: bpy.types.Object) -> int:
-    if obj.type == 'MESH':
+    if obj.type == "MESH":
         return len(obj.data.materials)
     return 0
 
+
 def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
-    if obj and obj.type == 'MESH' and obj.data.shape_keys:
+    if obj and obj.type == "MESH" and obj.data.shape_keys:
         mesh = obj.data
         shape_keys = mesh.shape_keys.key_blocks
 
@@ -67,9 +72,9 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
                 if vert.co != basis_key[i].co:
                     influenced_vertices.add(i)
 
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         for poly in mesh.polygons:  # Iterate over all polygons
             for idx in poly.vertices:  # Check each vertex in the polygon
@@ -78,16 +83,20 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
                     break
 
         # Switch to edit mode and face select mode
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.context.tool_settings.mesh_select_mode = (False, False, True)  # Enable face selection mode
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.context.tool_settings.mesh_select_mode = (
+            False,
+            False,
+            True,
+        )  # Enable face selection mode
 
         # Grow the selection to include adjacent faces
         bpy.ops.mesh.select_more()
 
         org_obj_list = {searchObj.name for searchObj in bpy.context.selected_objects}
         # Separate the selected faces into a new object
-        bpy.ops.mesh.separate(type='SELECTED')
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.mesh.separate(type="SELECTED")
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         # Find the newly created object which is the separated part with blendshapes
 
@@ -106,10 +115,11 @@ def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
     else:
         print("No active mesh with shape keys found.")
         return None
-    
+
+
 def combineObjects(objList: list[bpy.types.Object]) -> bpy.types.Object:
-    bpy.ops.object.select_all(action='DESELECT')
-    
+    bpy.ops.object.select_all(action="DESELECT")
+
     copylist = []
     for obj in objList:
         newObj = obj.copy()
@@ -119,7 +129,7 @@ def combineObjects(objList: list[bpy.types.Object]) -> bpy.types.Object:
             layer.name = "UV0"
         copylist.append(newObj)
         bpy.context.collection.objects.link(newObj)
-    
+
     for obj in copylist:
         obj.select_set(True)
 
@@ -128,7 +138,13 @@ def combineObjects(objList: list[bpy.types.Object]) -> bpy.types.Object:
 
     return bpy.context.view_layer.objects.active
 
-def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, preserveShapeKeys: bool = False) -> bpy.types.Object:
+
+def generateLOD(
+    sampleObj: bpy.types.Object,
+    lodLevel: Lod,
+    overwrite=False,
+    preserveShapeKeys: bool = False,
+) -> bpy.types.Object:
     # Get current triangle count
     sampleObj.update_from_editmode()
     current_triangles = getMeshTriCount(sampleObj.data)
@@ -153,7 +169,7 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
             if preserveShapeKeys:
                 shapeKeyObj = seperateShapeKeyMesh(newLodObject)
 
-            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action="DESELECT")
             newLodObject.select_set(True)
             bpy.context.view_layer.objects.active = newLodObject
             bpy.context.object.active_shape_key_index = 0
@@ -167,17 +183,17 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
         bpy.context.view_layer.objects.active = newLodObject
 
         # Merge close vertices
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
         match lodLevel:
             case Lod.LOD1:
                 bpy.ops.mesh.remove_doubles(threshold=0.005)
             case Lod.LOD2:
                 bpy.ops.mesh.remove_doubles(threshold=0.0075)
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode="OBJECT")
 
         # Triangulate
-        mod = newLodObject.modifiers.new(name="Triangulate", type='TRIANGULATE')
+        mod = newLodObject.modifiers.new(name="Triangulate", type="TRIANGULATE")
         bpy.ops.object.modifier_apply(modifier=mod.name)
 
         # Refresh count after removing shape keys and triangulation
@@ -186,19 +202,23 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
         match lodLevel:
             case Lod.LOD0 | Lod.LOD1 | Lod.LOD2:
                 # Decimate
-                mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
+                mod = newLodObject.modifiers.new(
+                    name="Decimate" + lodLevel.name, type="DECIMATE"
+                )
                 mod.ratio = targetPolyCount / current_triangles
                 bpy.ops.object.modifier_apply(modifier=mod.name)
             case Lod.LOD3:
                 # Decimate to Lod2, then weld
-                mod = newLodObject.modifiers.new(name="Decimate" + lodLevel.name, type='DECIMATE')
+                mod = newLodObject.modifiers.new(
+                    name="Decimate" + lodLevel.name, type="DECIMATE"
+                )
                 mod.ratio = Lod.LOD2 / current_triangles
                 bpy.ops.object.modifier_apply(modifier=mod.name)
                 # Weld
                 merge_threshold = 0.0
                 while getMeshTriCount(newLodObject.data) > targetPolyCount:
                     merge_threshold += 0.005
-                    mod = newLodObject.modifiers.new(name="Weld", type='WELD')
+                    mod = newLodObject.modifiers.new(name="Weld", type="WELD")
                     mod.merge_threshold = merge_threshold
                     bpy.ops.object.modifier_apply(modifier=mod.name)
 
@@ -213,7 +233,7 @@ def generateLOD(sampleObj: bpy.types.Object, lodLevel: Lod, overwrite = False, p
         bm = bmesh.new()
         bm.from_mesh(newLodObject.data)
         vertices_to_remove = [v for v in bm.verts if not v.link_faces]
-        bmesh.ops.delete(bm, geom=vertices_to_remove, context='VERTS')
+        bmesh.ops.delete(bm, geom=vertices_to_remove, context="VERTS")
         bm.to_mesh(newLodObject.data)
         bm.free()
         newLodObject.data.update()

@@ -4,11 +4,14 @@ class SqApiException(Exception):
         self.http_code = http_code
         self.inner = inner
 
+
 class SqApiNetworkException(SqApiException):
     pass
 
+
 class SqApiAuthException(SqApiException):
     pass
+
 
 class SqAlreadyExistsException(SqApiException):
     pass
