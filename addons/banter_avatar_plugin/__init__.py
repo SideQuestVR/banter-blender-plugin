@@ -310,7 +310,7 @@ class BANTER_PT_Exporter(bpy.types.Panel):
             # col.prop(props, "code", text=sq_api.login_code.code)
             col.label(text="Please allow up to 10s after you enter the code.")
             op = col.operator("banter.open_url", text="Open Page")
-            op.url = "https://links.sidetestvr.com/link"
+            op.url = "https://sidequestvr.com/link-sidequest"
         else:
             col = layout.column()
             col.label(text="Logged in as " + sq_api.user.name)
@@ -452,7 +452,7 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
     bl_description = ""
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    url: bpy.props.StringProperty(name="URL")  # type: ignore
+    url: bpy.props.StringProperty(name="URL", options={"HIDDEN"})  # type: ignore
 
     @classmethod
     def poll(cls, context):

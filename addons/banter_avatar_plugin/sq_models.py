@@ -69,7 +69,7 @@ class SqUser:
 
 class SqAppApiConfig:
     def __init__(
-        self, client_id, data_path, test_mode=True, data_file_name="sqappapi.json"
+        self, client_id, data_path, test_mode=False, data_file_name="sqappapi.json"
     ):
         if not os.path.exists(data_path):
             raise FileNotFoundError("Specified data path does not exist")

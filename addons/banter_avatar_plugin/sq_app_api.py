@@ -16,12 +16,12 @@ class SqAppApi:
         self.user = None
         self.login_code = None
         self.token = None
-        client_id = "client_85b087d9975cb8ca5bb575a2"  # test
-        # client_id = "client_0e4c67f9a6bbe12143870312" # prod
+        # client_id = "client_85b087d9975cb8ca5bb575a2"  # test
+        client_id = "client_0e4c67f9a6bbe12143870312"  # prod
         self.config = SqAppApiConfig(
             client_id,
             bpy.utils.user_resource("EXTENSIONS", path=PLUGIN_ID, create=True),
-            True,
+            False,
             "sqappapi.json",
         )
         self.load_data()
