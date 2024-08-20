@@ -21,7 +21,7 @@ from bpy.types import Context
 import bpy.utils.previews
 from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
-from .utils import Lod, combineObjects, generateLOD, getMeshTriCount
+from .utils import Lod, combineObjects, generateLOD, getMeshTriCount, getMaterialCount
 
 addon_keymaps = {}
 _icons = None
@@ -78,7 +78,7 @@ class BANTER_PT_Configurator(bpy.types.Panel):
         layout.separator()
         #Local Avatar
         col = layout.column()
-        col.label(text="Local Avatar")
+        col.label(text="Local Avatar Meshes")
         if bpy.context.scene.banter_cLocalAvatarObjects and len(bpy.context.scene.banter_cLocalAvatarObjects) > 0:
             meshrow = col.row()
             meshrow.template_list("BANTER_UL_MeshList", "", bpy.data.scenes[0], "banter_cLocalAvatarObjects", bpy.data.scenes[0], "banter_cLocalAvatarObjects_Active")
@@ -145,38 +145,64 @@ class BANTER_PT_Validator(bpy.types.Panel):
             col = col.column(align=True)
             col.label(text='Not all checks are passing:')
 
-            row = col.row()
-            present = bpy.context.scene.banter_pArmature is not None
-            row.label(text=f"Armature is {'' if present else 'not '}set", icon=self.icon_bool(bpy.context.scene.banter_pArmature))
+            # Armature
+            if not bpy.context.scene.banter_pArmature:
+                col.label(text='Armature')
+                row = col.row()
+                row.label(text=f"Armature is not set", icon=self.icon_bool(bpy.context.scene.banter_pArmature))
 
-            row = col.row()
-            row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLocalLimit))
-            if not bpy.context.scene.banter_bMeetsLocalLimit:
-                pass
+            col.separator()
 
-            row = col.row()
-            row.label(text=f'LOD0: {Lod.LOD0}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod0))
-            if not bpy.context.scene.banter_bMeetsLod0:
-                op = row.operator('banter.genlod', text='Fix')
-                op.lodLevel = 0
+            # Tris
+            if not bpy.context.scene.banter_bTrisPassed:
+                col.label(text='Tri Count')
 
-            row = col.row()
-            row.label(text=f'LOD1: {Lod.LOD1}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod1))
-            if not bpy.context.scene.banter_bMeetsLod1:
-                op = row.operator('banter.genlod', text='Fix')
-                op.lodLevel = 1
-            
-            row = col.row()
-            row.label(text=f'LOD2: {Lod.LOD2}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod2))
-            if not bpy.context.scene.banter_bMeetsLod2:
-                op = row.operator('banter.genlod', text='Fix')
-                op.lodLevel = 2
-            
-            row = col.row()
-            row.label(text=f'LOD3: {Lod.LOD3}', icon=self.icon_bool(bpy.context.scene.banter_bMeetsLod3))
-            if not bpy.context.scene.banter_bMeetsLod3:
-                op = row.operator('banter.genlod', text='Fix')
-                op.lodLevel = 3
+                row = col.row()
+                row.label(text=f'Local: {Lod.LOCAL_LIMIT}', icon=self.icon_bool(bpy.context.scene.banter_bLocalTris))
+                if not bpy.context.scene.banter_bLocalTris:
+                    pass
+
+                row = col.row()
+                row.label(text=f'LOD0: {Lod.LOD0}', icon=self.icon_bool(bpy.context.scene.banter_bLod0Tris))
+                if not bpy.context.scene.banter_bLod0Tris:
+                    op = row.operator('banter.genlod', text='Fix')
+                    op.lodLevel = 0
+
+                row = col.row()
+                row.label(text=f'LOD1: {Lod.LOD1}', icon=self.icon_bool(bpy.context.scene.banter_bLod1Tris))
+                if not bpy.context.scene.banter_bLod1Tris:
+                    op = row.operator('banter.genlod', text='Fix')
+                    op.lodLevel = 1
+                
+                row = col.row()
+                row.label(text=f'LOD2: {Lod.LOD2}', icon=self.icon_bool(bpy.context.scene.banter_bLod2Tris))
+                if not bpy.context.scene.banter_bLod2Tris:
+                    op = row.operator('banter.genlod', text='Fix')
+                    op.lodLevel = 2
+                
+                row = col.row()
+                row.label(text=f'LOD3: {Lod.LOD3}', icon=self.icon_bool(bpy.context.scene.banter_bLod3Tris))
+                if not bpy.context.scene.banter_bLod3Tris:
+                    op = row.operator('banter.genlod', text='Fix')
+                    op.lodLevel = 3
+
+            # Materials
+            if not bpy.context.scene.banter_bMatsPassed:
+                col.label(text='Material Count')
+
+                row = col.row()
+                row.label(text='LOD0 1 material maximum', icon=self.icon_bool(bpy.context.scene.banter_bLod0Mats))
+
+                row = col.row()
+                row.label(text='LOD1 1 material maximum', icon=self.icon_bool(bpy.context.scene.banter_bLod1Mats))
+
+                row = col.row()
+                row.label(text='LOD2 1 material maximum', icon=self.icon_bool(bpy.context.scene.banter_bLod2Mats))
+
+                row = col.row()
+                row.label(text='LOD3 1 material maximum', icon=self.icon_bool(bpy.context.scene.banter_bLod3Mats))
+
+        col.label(text='Warnings:')
         if not bpy.context.scene.banter_pLocalHeadMesh:
             col.label(text='No Head Mesh Selected', icon="ERROR")
 
@@ -365,25 +391,46 @@ class Banter_OT_RunValidator(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        localCount = getObjectsPolyCount(bpy.context.scene.banter_cLocalAvatarObjects) if bpy.context.scene.banter_cLocalAvatarObjects else 1000000
-        lod0lodLevel = Lod.getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod0Avatar.data) if bpy.context.scene.banter_pLod0Avatar else 1000000)
-        lod1lodLevel = Lod.getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod1Avatar.data) if bpy.context.scene.banter_pLod1Avatar else 1000000)
-        lod2lodLevel = Lod.getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod2Avatar.data) if bpy.context.scene.banter_pLod2Avatar else 1000000)
-        lod3lodLevel = Lod.getLodGroup(getMeshTriCount(bpy.context.scene.banter_pLod3Avatar.data) if bpy.context.scene.banter_pLod3Avatar else 1000000)
+        localTris = getObjectsPolyCount(bpy.context.scene.banter_cLocalAvatarObjects) if bpy.context.scene.banter_cLocalAvatarObjects else 1000000
+        lod0Tris = getMeshTriCount(bpy.context.scene.banter_pLod0Avatar.data) if bpy.context.scene.banter_pLod0Avatar else 1000000
+        lod1Tris = getMeshTriCount(bpy.context.scene.banter_pLod1Avatar.data) if bpy.context.scene.banter_pLod1Avatar else 1000000
+        lod2Tris = getMeshTriCount(bpy.context.scene.banter_pLod2Avatar.data) if bpy.context.scene.banter_pLod2Avatar else 1000000
+        lod3Tris = getMeshTriCount(bpy.context.scene.banter_pLod3Avatar.data) if bpy.context.scene.banter_pLod3Avatar else 1000000
 
-        bpy.context.scene.banter_bMeetsLocalLimit = (localCount <= Lod.LOCAL_LIMIT)
-        bpy.context.scene.banter_bMeetsLod0 = (lod0lodLevel >= 0)
-        bpy.context.scene.banter_bMeetsLod1 = (lod1lodLevel >= 1)
-        bpy.context.scene.banter_bMeetsLod2 = (lod2lodLevel >= 2)
-        bpy.context.scene.banter_bMeetsLod3 = (lod3lodLevel >= 3)
+        # Tris
+        bpy.context.scene.banter_bLocalTris = (localTris <= Lod.LOCAL_LIMIT)
+        bpy.context.scene.banter_bLod0Tris = (lod0Tris <= Lod.LOD0)
+        bpy.context.scene.banter_bLod1Tris = (lod1Tris <= Lod.LOD1)
+        bpy.context.scene.banter_bLod2Tris = (lod2Tris <= Lod.LOD2)
+        bpy.context.scene.banter_bLod3Tris = (lod3Tris <= Lod.LOD3)
 
+        bpy.context.scene.banter_bTrisPassed = \
+            bpy.context.scene.banter_bLocalTris and \
+            bpy.context.scene.banter_bLod0Tris and \
+            bpy.context.scene.banter_bLod1Tris and \
+            bpy.context.scene.banter_bLod2Tris and \
+            bpy.context.scene.banter_bLod3Tris and \
+            True
+
+        # Materials
+        bpy.context.scene.banter_bLod0Mats = 2 > (getMaterialCount(bpy.context.scene.banter_pLod0Avatar) if bpy.context.scene.banter_pLod0Avatar else 10)
+        bpy.context.scene.banter_bLod1Mats = 2 > (getMaterialCount(bpy.context.scene.banter_pLod1Avatar) if bpy.context.scene.banter_pLod1Avatar else 10)
+        bpy.context.scene.banter_bLod2Mats = 2 > (getMaterialCount(bpy.context.scene.banter_pLod2Avatar) if bpy.context.scene.banter_pLod2Avatar else 10)
+        bpy.context.scene.banter_bLod3Mats = 2 > (getMaterialCount(bpy.context.scene.banter_pLod3Avatar) if bpy.context.scene.banter_pLod3Avatar else 10)
+
+        bpy.context.scene.banter_bMatsPassed = \
+            bpy.context.scene.banter_bLod0Mats and \
+            bpy.context.scene.banter_bLod1Mats and \
+            bpy.context.scene.banter_bLod2Mats and \
+            bpy.context.scene.banter_bLod3Mats and \
+            True
+
+        # Final check
         bpy.context.scene.banter_bPassed = \
-            bpy.context.scene.banter_bMeetsLocalLimit and \
-            bpy.context.scene.banter_bMeetsLod0 and \
-            bpy.context.scene.banter_bMeetsLod1 and \
-            bpy.context.scene.banter_bMeetsLod2 and \
-            bpy.context.scene.banter_bMeetsLod3 and \
-            bpy.context.scene.banter_pArmature is not None
+            bpy.context.scene.banter_pArmature is not None and \
+            bpy.context.scene.banter_bTrisPassed and \
+            bpy.context.scene.banter_bMatsPassed and \
+            True
         
         return {"FINISHED"}
 
@@ -529,27 +576,35 @@ def register():
 
     bpy.utils.register_class(BanterAvatarCollection)
 
-
-
-    # bpy.types.Scene.CodeProp = bpy.props.PointerProperty(type=CodeProp)
     bpy.types.Scene.banter_bIsCurrentlyExporting = bpy.props.BoolProperty(name='PluginIsCurrentlyExporting', description='', default=False)
 
-    bpy.types.Scene.banter_bPassed = bpy.props.BoolProperty(name='APassed', description='Test if the Avatar fullfils the requirements', default=False)
     # check props
-    bpy.types.Scene.banter_bMeetsLocalLimit = bpy.props.BoolProperty(name='MeetsLocalLimit', description='Test if the Avatar is less than Local Limit', default=False)
-    bpy.types.Scene.banter_bMeetsLod0 = bpy.props.BoolProperty(name='MeetsLod0', description='Test if the Avatar is less than LOD0', default=False)
-    bpy.types.Scene.banter_bMeetsLod1 = bpy.props.BoolProperty(name='MeetsLod1', description='Test if the Avatar is less than LOD1', default=False)
-    bpy.types.Scene.banter_bMeetsLod2 = bpy.props.BoolProperty(name='MeetsLod2', description='Test if the Avatar is less than LOD2', default=False)
-    bpy.types.Scene.banter_bMeetsLod3 = bpy.props.BoolProperty(name='MeetsLod3', description='Test if the Avatar is less than LOD3', default=False)
+    bpy.types.Scene.banter_bPassed = bpy.props.BoolProperty(name='APassed', description='Test if the Avatar fullfils the requirements', default=False)
 
+    # tris
+    bpy.types.Scene.banter_bTrisPassed = bpy.props.BoolProperty(name='TrisPassed', description='All Tri checks Passed', default=False)
+    bpy.types.Scene.banter_bLocalTris = bpy.props.BoolProperty(name='LocalTris', description='Mesh meets local tri limits', default=False)
+    bpy.types.Scene.banter_bLod0Tris = bpy.props.BoolProperty(name='Lod0Tris', description='Mesh meets LOD0 tri limits', default=False)
+    bpy.types.Scene.banter_bLod1Tris = bpy.props.BoolProperty(name='Lod1Tris', description='Mesh meets LOD1 tri limits', default=False)
+    bpy.types.Scene.banter_bLod2Tris = bpy.props.BoolProperty(name='Lod2Tris', description='Mesh meets LOD2 tri limits', default=False)
+    bpy.types.Scene.banter_bLod3Tris = bpy.props.BoolProperty(name='Lod3Tris', description='Mesh meets LOD3 tri limits', default=False)
+
+    # materials
+    bpy.types.Scene.banter_bMatsPassed = bpy.props.BoolProperty(name='MatsPassed', description='All Material checks Passed', default=False)
+    bpy.types.Scene.banter_bLod0Mats = bpy.props.BoolProperty(name='Lod0Mats', description='Mesh meets LOD0 material limits', default=False)
+    bpy.types.Scene.banter_bLod1Mats = bpy.props.BoolProperty(name='Lod1Mats', description='Mesh meets LOD1 material limits', default=False)
+    bpy.types.Scene.banter_bLod2Mats = bpy.props.BoolProperty(name='Lod2Mats', description='Mesh meets LOD2 material limits', default=False)
+    bpy.types.Scene.banter_bLod3Mats = bpy.props.BoolProperty(name='Lod3Mats', description='Mesh meets LOD3 material limits', default=False)
+
+    # pointer props
     bpy.types.Scene.banter_pArmature = bpy.props.PointerProperty(name='Armature', description='', type=bpy.types.Object, poll=armaturepointer_poll)
     bpy.types.Scene.banter_cLocalAvatarObjects = bpy.props.CollectionProperty(name='LocalAvatar', description='', type=BanterAvatarCollection)
     bpy.types.Scene.banter_cLocalAvatarObjects_Active = bpy.props.IntProperty(name='LocalAvatarSelectedObject', description='', default=0)
     bpy.types.Scene.banter_pLocalHeadMesh = bpy.props.PointerProperty(name='Local Head Mesh', description="This mesh will be hidden in Banter so your view isn't blocked", type=bpy.types.Object, poll=headmesh_poll)
-    bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description='Shapekeys allowed', type=bpy.types.Object, poll=meshpointer_poll)
-    bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
-    bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
-    bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description='Shapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod0Avatar = bpy.props.PointerProperty(name='Avatar LOD0', description=f'Tri Limit {Lod.LOD0}\nShapekeys allowed', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod1Avatar = bpy.props.PointerProperty(name='Avatar LOD1', description=f'Tri Limit {Lod.LOD1}\nShapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod2Avatar = bpy.props.PointerProperty(name='Avatar LOD2', description=f'Tri Limit {Lod.LOD2}\nShapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
+    bpy.types.Scene.banter_pLod3Avatar = bpy.props.PointerProperty(name='Avatar LOD3', description=f'Tri Limit {Lod.LOD3}\nShapekeys will be stripped', type=bpy.types.Object, poll=meshpointer_poll)
 
     bpy.types.Scene.banter_pShaderHint = bpy.props.EnumProperty(name='ShaderHint', description='Shader to use in Banter', items=[
         ('PBR', 'PBR', 'Default PBR'),
@@ -575,11 +630,18 @@ def unregister():
     # del bpy.types.Scene.CodeProp 
     del bpy.types.Scene.banter_bPassed
 
-    del bpy.types.Scene.banter_bMeetsLocalLimit
-    del bpy.types.Scene.banter_bMeetsLod0
-    del bpy.types.Scene.banter_bMeetsLod1
-    del bpy.types.Scene.banter_bMeetsLod2
-    del bpy.types.Scene.banter_bMeetsLod3
+    del bpy.types.Scene.banter_bTrisPassed
+    del bpy.types.Scene.banter_bLocalTris
+    del bpy.types.Scene.banter_bLod0Tris
+    del bpy.types.Scene.banter_bLod1Tris
+    del bpy.types.Scene.banter_bLod2Tris
+    del bpy.types.Scene.banter_bLod3Tris
+
+    del bpy.types.Scene.banter_bMatsPassed
+    del bpy.types.Scene.banter_bLod0Mats
+    del bpy.types.Scene.banter_bLod1Mats
+    del bpy.types.Scene.banter_bLod2Mats
+    del bpy.types.Scene.banter_bLod3Mats
 
     del bpy.types.Scene.banter_pArmature
     del bpy.types.Scene.banter_cLocalAvatarObjects

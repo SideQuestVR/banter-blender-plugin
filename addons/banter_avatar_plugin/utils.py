@@ -44,6 +44,11 @@ def getMeshTriCount(mesh: bpy.types.Mesh) -> int:
         total += len(verts) - 2
     return total
 
+def getMaterialCount(obj: bpy.types.Object) -> int:
+    if obj.type == 'MESH':
+        return len(obj.data.materials)
+    return 0
+
 def seperateShapeKeyMesh(obj: bpy.types.Object) -> bpy.types.Object:
     if obj and obj.type == 'MESH' and obj.data.shape_keys:
         mesh = obj.data
