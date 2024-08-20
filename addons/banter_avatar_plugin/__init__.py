@@ -258,25 +258,25 @@ class BANTER_PT_Validator(bpy.types.Panel):
 
                 row = col.row()
                 row.label(
-                    text="LOD0 1 material maximum",
+                    text="LOD0: 1 material maximum",
                     icon=self.icon_bool(bpy.context.scene.banter_bLod0Mats),
                 )
 
                 row = col.row()
                 row.label(
-                    text="LOD1 1 material maximum",
+                    text="LOD1: 1 material maximum",
                     icon=self.icon_bool(bpy.context.scene.banter_bLod1Mats),
                 )
 
                 row = col.row()
                 row.label(
-                    text="LOD2 1 material maximum",
+                    text="LOD2: 1 material maximum",
                     icon=self.icon_bool(bpy.context.scene.banter_bLod2Mats),
                 )
 
                 row = col.row()
                 row.label(
-                    text="LOD3 1 material maximum",
+                    text="LOD3: 1 material maximum",
                     icon=self.icon_bool(bpy.context.scene.banter_bLod3Mats),
                 )
 
