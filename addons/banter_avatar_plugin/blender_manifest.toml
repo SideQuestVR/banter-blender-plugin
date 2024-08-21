@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 id = "sidequest_banter_avatars"
 name = "Banter Avatar Configurator"
-version = "0.1.1"
+version = "0.2.0"
 tagline = "Configure and upload custom avatars for the Bantaverse"
 maintainer = "SideQuest"
 type = "add-on"

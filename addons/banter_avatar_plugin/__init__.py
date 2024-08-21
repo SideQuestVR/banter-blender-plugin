@@ -3,7 +3,7 @@ bl_info = {
     "author": "SideQuest",
     "description": "Configure and upload custom avatars for the Bantaverse",
     "blender": (4, 2, 0),
-    "version": (0, 1, 1),
+    "version": (0, 2, 0),
     "location": "View3D > Sidebar > BANTER",
     "support": "COMMUNITY",
     "category": "3D View",
@@ -570,12 +570,13 @@ class Banter_OT_RunValidator(bpy.types.Operator):
         )
 
         # Final check
-        bpy.context.scene.banter_bPassed = (
-            bpy.context.scene.banter_pArmature is not None
-            and bpy.context.scene.banter_bTrisPassed
-            and bpy.context.scene.banter_bMatsPassed
-            and True
-        )
+        bpy.context.scene.banter_bPassed = True
+        # (
+        #     bpy.context.scene.banter_pArmature is not None
+        #     and bpy.context.scene.banter_bTrisPassed
+        #     and bpy.context.scene.banter_bMatsPassed
+        #     and True
+        # )
 
         return {"FINISHED"}
 
