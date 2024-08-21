@@ -316,6 +316,7 @@ class BANTER_PT_Exporter(bpy.types.Panel):
             col.label(text="Logged in as " + sq_api.user.name)
             op = col.operator("banter.upload_avatars", text="Export & Upload Avatars")
             op = col.operator("banter.export_avatars", text="Export Avatars Only")
+            col.separator()
             op = col.operator("banter.logout", text="Logout")
 
 
