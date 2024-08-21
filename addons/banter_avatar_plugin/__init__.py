@@ -571,13 +571,12 @@ class Banter_OT_RunValidator(bpy.types.Operator):
         )
 
         # Final check
-        bpy.context.scene.banter_bPassed = True
-        # (
-        #     bpy.context.scene.banter_pArmature is not None
-        #     and bpy.context.scene.banter_bTrisPassed
-        #     and bpy.context.scene.banter_bMatsPassed
-        #     and True
-        # )
+        bpy.context.scene.banter_bPassed = (
+            bpy.context.scene.banter_pArmature is not None
+            and bpy.context.scene.banter_bTrisPassed
+            and bpy.context.scene.banter_bMatsPassed
+            and True
+        )
 
         return {"FINISHED"}
 
