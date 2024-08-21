@@ -23,6 +23,7 @@ import bpy.utils.previews
 from bpy_extras.io_utils import ExportHelper
 from .sq_app_api import SqAppApi
 from .utils import Lod, combineObjects, generateLOD, getMeshTriCount, getMaterialCount
+from .atlas import bakeAtlas
 
 addon_keymaps = {}
 _icons = None
@@ -256,29 +257,57 @@ class BANTER_PT_Validator(bpy.types.Panel):
             if not bpy.context.scene.banter_bMatsPassed:
                 col.label(text="Material Count")
 
-                row = col.row()
-                row.label(
-                    text="LOD0: 1 material maximum",
-                    icon=self.icon_bool(bpy.context.scene.banter_bLod0Mats),
-                )
+                if not bpy.context.scene.banter_bLod0Mats:
+                    row = col.row()
+                    row.label(
+                        text="LOD0: 1 material maximum",
+                        icon=self.icon_bool(bpy.context.scene.banter_bLod0Mats),
+                    )
+                    op = row.operator("banter.atlasmaterial", text="Fix")
+                    op.targetObj = (
+                        bpy.context.scene.banter_pLod0Avatar.name
+                        if bpy.context.scene.banter_pLod0Avatar
+                        else ""
+                    )
 
-                row = col.row()
-                row.label(
-                    text="LOD1: 1 material maximum",
-                    icon=self.icon_bool(bpy.context.scene.banter_bLod1Mats),
-                )
+                if not bpy.context.scene.banter_bLod1Mats:
+                    row = col.row()
+                    row.label(
+                        text="LOD1: 1 material maximum",
+                        icon=self.icon_bool(bpy.context.scene.banter_bLod1Mats),
+                    )
+                    op = row.operator("banter.atlasmaterial", text="Fix")
+                    op.targetObj = (
+                        bpy.context.scene.banter_pLod1Avatar.name
+                        if bpy.context.scene.banter_pLod1Avatar
+                        else ""
+                    )
 
-                row = col.row()
-                row.label(
-                    text="LOD2: 1 material maximum",
-                    icon=self.icon_bool(bpy.context.scene.banter_bLod2Mats),
-                )
+                if not bpy.context.scene.banter_bLod2Mats:
+                    row = col.row()
+                    row.label(
+                        text="LOD2: 1 material maximum",
+                        icon=self.icon_bool(bpy.context.scene.banter_bLod2Mats),
+                    )
+                    op = row.operator("banter.atlasmaterial", text="Fix")
+                    op.targetObj = (
+                        bpy.context.scene.banter_pLod2Avatar.name
+                        if bpy.context.scene.banter_pLod2Avatar
+                        else ""
+                    )
 
-                row = col.row()
-                row.label(
-                    text="LOD3: 1 material maximum",
-                    icon=self.icon_bool(bpy.context.scene.banter_bLod3Mats),
-                )
+                if not bpy.context.scene.banter_bLod3Mats:
+                    row = col.row()
+                    row.label(
+                        text="LOD3: 1 material maximum",
+                        icon=self.icon_bool(bpy.context.scene.banter_bLod3Mats),
+                    )
+                    op = row.operator("banter.atlasmaterial", text="Fix")
+                    op.targetObj = (
+                        bpy.context.scene.banter_pLod3Avatar.name
+                        if bpy.context.scene.banter_pLod3Avatar
+                        else ""
+                    )
 
         col.label(text="Warnings:")
         if not bpy.context.scene.banter_pLocalHeadMesh:
@@ -488,6 +517,21 @@ class Banter_OT_ImportArmature(bpy.types.Operator):
                     if obj.type == "ARMATURE":
                         bpy.context.scene.banter_pArmature = obj
 
+        return {"FINISHED"}
+
+
+class Banter_OT_AtlasMaterial(bpy.types.Operator):
+    bl_idname = "banter.atlasmaterial"
+    bl_label = "Atlas Material"
+    bl_description = "Atlas Material"
+    bl_options = {"REGISTER", "UNDO"}
+
+    targetObj: bpy.props.StringProperty(
+        name="Target object name", default=""
+    )  # type: ignore
+
+    def execute(self, context):
+        bakeAtlas(bpy.data.objects[self.targetObj])
         return {"FINISHED"}
 
 
@@ -723,6 +767,7 @@ def register():
     bpy.utils.register_class(Banter_OT_ExportAvatars)
     bpy.utils.register_class(Banter_OT_OpenUrl)
     bpy.utils.register_class(Banter_OT_ImportArmature)
+    bpy.utils.register_class(Banter_OT_AtlasMaterial)
     bpy.utils.register_class(Banter_OT_RunValidator)
     bpy.utils.register_class(Banter_OT_GenerateMissingLods)
     bpy.utils.register_class(Banter_OT_GenerateMeshForLod)
@@ -904,6 +949,7 @@ def unregister():
     bpy.utils.unregister_class(Banter_OT_ExportAvatars)
     bpy.utils.unregister_class(Banter_OT_OpenUrl)
     bpy.utils.unregister_class(Banter_OT_ImportArmature)
+    bpy.utils.unregister_class(Banter_OT_AtlasMaterial)
     bpy.utils.unregister_class(Banter_OT_RunValidator)
     bpy.utils.unregister_class(Banter_OT_GenerateMissingLods)
     bpy.utils.unregister_class(Banter_OT_GenerateMeshForLod)
