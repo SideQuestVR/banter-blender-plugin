@@ -664,7 +664,7 @@ class Banter_OT_ExportAvatars(bpy.types.Operator, ExportHelper):
             raise Exception("Export failed")
 
 
-class Banter_OT_UploadAvatars(bpy.types.Operator):
+class Banter_OT_UploadAvatars(Banter_OT_ExportAvatars):
     bl_idname = "banter.upload_avatars"
     bl_label = "Upload Avatars"
     bl_description = ""
@@ -674,24 +674,16 @@ class Banter_OT_UploadAvatars(bpy.types.Operator):
     def poll(cls, context):
         return bpy.context.scene.banter_bPassed
 
-    def invoke(self, context, event):
-        bpy.ops.banter.export_avatars("INVOKE_DEFAULT")
-        context.window_manager.modal_handler_add(self)
-        return {"RUNNING_MODAL"}
-
-    def modal(self, context, event):
-        return {"PASS_THROUGH"}
-
     def execute(self, context):
         try:
+            Banter_OT_ExportAvatars.execute(self, context)
             sq_api.upload_avatars(
                 bpy.context.scene.banter_sLocalExportPath,
                 bpy.context.scene.banter_sLodExportPath,
             )
             self.report({"INFO"}, "Avatar upload complete.")
         except Exception as e:
-            print(e)
-            self.report({"INFO"}, str(e))
+            self.report({"ERROR"}, str(e))
 
         bpy.context.scene.banter_sLocalExportPath = ""
         bpy.context.scene.banter_sLodExportPath = ""
