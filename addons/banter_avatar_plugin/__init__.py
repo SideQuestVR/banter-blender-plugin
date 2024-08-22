@@ -403,6 +403,10 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
             True if self.lodLevel == 0 else False,
         )
 
+        # Bake an atlas material if needed
+        if getMaterialCount(lodObj) > 1:
+            bpy.ops.banter.atlasmaterial(targetObj=lodObj.name)
+
         match self.lodLevel:
             case 0:
                 bpy.context.scene.banter_pLod0Avatar = lodObj
