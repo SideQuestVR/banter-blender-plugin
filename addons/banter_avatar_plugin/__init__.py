@@ -450,8 +450,14 @@ class Banter_OT_AddObjectToLocalAvatarList(bpy.types.Operator):
 
     def add_recursive(self, obj):
         if obj.type == "MESH":
-            item = bpy.context.scene.banter_cLocalAvatarObjects.add()
-            item.object = obj
+            exists = False
+            for checkObj in bpy.context.scene.banter_cLocalAvatarObjects:
+                if checkObj.object == obj:
+                    exists = True
+                    break
+            if not exists:
+                ref = bpy.context.scene.banter_cLocalAvatarObjects.add()
+                ref.object = obj
         for child in obj.children:
             self.add_recursive(child)
 
