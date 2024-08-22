@@ -389,9 +389,13 @@ class Banter_OT_GenerateMeshForLod(bpy.types.Operator):
     def execute(self, context):
 
         objects = []
-        for item in bpy.context.scene.banter_cLocalAvatarObjects:
-            if item.object:
-                objects.append(item.object)
+
+        if self.lodLevel == 0 or bpy.context.scene.banter_pLod0Avatar is None:
+            for item in bpy.context.scene.banter_cLocalAvatarObjects:
+                if item.object:
+                    objects.append(item.object)
+        else:
+            objects.append(bpy.context.scene.banter_pLod0Avatar)
 
         targetObj = combineObjects(objects)
         targetObj.name = "Avatar_LOD" + str(self.lodLevel)
