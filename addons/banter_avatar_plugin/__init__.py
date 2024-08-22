@@ -207,7 +207,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
 
             # Tris
             if not bpy.context.scene.banter_bTrisPassed:
-                col.label(text="Tri Count")
+                col.label(text="Tris:")
 
                 row = col.row()
                 row.label(
@@ -255,7 +255,7 @@ class BANTER_PT_Validator(bpy.types.Panel):
 
             # Materials
             if not bpy.context.scene.banter_bMatsPassed:
-                col.label(text="Material Count")
+                col.label(text="Materials:")
 
                 if not bpy.context.scene.banter_bLod0Mats:
                     row = col.row()
@@ -263,12 +263,9 @@ class BANTER_PT_Validator(bpy.types.Panel):
                         text="LOD0: 1 material maximum",
                         icon=self.icon_bool(bpy.context.scene.banter_bLod0Mats),
                     )
-                    op = row.operator("banter.atlasmaterial", text="Fix")
-                    op.targetObj = (
-                        bpy.context.scene.banter_pLod0Avatar.name
-                        if bpy.context.scene.banter_pLod0Avatar
-                        else ""
-                    )
+                    if bpy.context.scene.banter_pLod0Avatar:
+                        op = row.operator("banter.atlasmaterial", text="Fix")
+                        op.targetObj = bpy.context.scene.banter_pLod0Avatar
 
                 if not bpy.context.scene.banter_bLod1Mats:
                     row = col.row()
@@ -276,12 +273,9 @@ class BANTER_PT_Validator(bpy.types.Panel):
                         text="LOD1: 1 material maximum",
                         icon=self.icon_bool(bpy.context.scene.banter_bLod1Mats),
                     )
-                    op = row.operator("banter.atlasmaterial", text="Fix")
-                    op.targetObj = (
-                        bpy.context.scene.banter_pLod1Avatar.name
-                        if bpy.context.scene.banter_pLod1Avatar
-                        else ""
-                    )
+                    if bpy.context.scene.banter_pLod1Avatar:
+                        op = row.operator("banter.atlasmaterial", text="Fix")
+                        op.targetObj = bpy.context.scene.banter_pLod1Avatar
 
                 if not bpy.context.scene.banter_bLod2Mats:
                     row = col.row()
@@ -289,12 +283,9 @@ class BANTER_PT_Validator(bpy.types.Panel):
                         text="LOD2: 1 material maximum",
                         icon=self.icon_bool(bpy.context.scene.banter_bLod2Mats),
                     )
-                    op = row.operator("banter.atlasmaterial", text="Fix")
-                    op.targetObj = (
-                        bpy.context.scene.banter_pLod2Avatar.name
-                        if bpy.context.scene.banter_pLod2Avatar
-                        else ""
-                    )
+                    if bpy.context.scene.banter_pLod2Avatar:
+                        op = row.operator("banter.atlasmaterial", text="Fix")
+                        op.targetObj = bpy.context.scene.banter_pLod2Avatar
 
                 if not bpy.context.scene.banter_bLod3Mats:
                     row = col.row()
@@ -302,12 +293,9 @@ class BANTER_PT_Validator(bpy.types.Panel):
                         text="LOD3: 1 material maximum",
                         icon=self.icon_bool(bpy.context.scene.banter_bLod3Mats),
                     )
-                    op = row.operator("banter.atlasmaterial", text="Fix")
-                    op.targetObj = (
-                        bpy.context.scene.banter_pLod3Avatar.name
-                        if bpy.context.scene.banter_pLod3Avatar
-                        else ""
-                    )
+                    if bpy.context.scene.banter_pLod3Avatar:
+                        op = row.operator("banter.atlasmaterial", text="Fix")
+                        op.targetObj = bpy.context.scene.banter_pLod3Avatar
 
         col.label(text="Warnings:")
         if not bpy.context.scene.banter_pLocalHeadMesh:
@@ -594,22 +582,22 @@ class Banter_OT_RunValidator(bpy.types.Operator):
         bpy.context.scene.banter_bLod0Mats = 2 > (
             getMaterialCount(bpy.context.scene.banter_pLod0Avatar)
             if bpy.context.scene.banter_pLod0Avatar
-            else 10
+            else 0
         )
         bpy.context.scene.banter_bLod1Mats = 2 > (
             getMaterialCount(bpy.context.scene.banter_pLod1Avatar)
             if bpy.context.scene.banter_pLod1Avatar
-            else 10
+            else 0
         )
         bpy.context.scene.banter_bLod2Mats = 2 > (
             getMaterialCount(bpy.context.scene.banter_pLod2Avatar)
             if bpy.context.scene.banter_pLod2Avatar
-            else 10
+            else 0
         )
         bpy.context.scene.banter_bLod3Mats = 2 > (
             getMaterialCount(bpy.context.scene.banter_pLod3Avatar)
             if bpy.context.scene.banter_pLod3Avatar
-            else 10
+            else 0
         )
 
         bpy.context.scene.banter_bMatsPassed = (
