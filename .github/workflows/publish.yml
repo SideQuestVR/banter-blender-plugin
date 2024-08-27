@@ -22,12 +22,13 @@ jobs:
       - name: Validate
         run: |
           # cd $GITHUB_WORKSPACE/addons/banter_avatar_plugin
-          blender --command extension validate --source-dir $GITHUB_WORKSPACE/addons/banter_avatar_plugin
+          blender --command extension validate $GITHUB_WORKSPACE/addons/banter_avatar_plugin
           blender --command extension build --source-dir $GITHUB_WORKSPACE/addons/banter_avatar_plugin
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          path: sidequest_banter_avatars-*.zip
+          path: $GITHUB_WORKSPACE/sidequest_banter_avatars*.zip
           name: sidequest_banter_avatars
           
 
