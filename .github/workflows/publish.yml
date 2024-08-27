@@ -28,7 +28,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          path: $GITHUB_WORKSPACE/sidequest_banter_avatars-1.0.0.zip
+          path: sidequest_banter_avatars-1.0.0.zip
           name: sidequest_banter_avatars
           
 
