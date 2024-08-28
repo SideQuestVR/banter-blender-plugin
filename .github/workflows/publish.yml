@@ -4,7 +4,7 @@ on:
     branches:
       - "gh-actions"
     # tags:
-    #   #- '[a-zA-Z-_]+\/[0-9]+\.[0-9]+\.[0-9]+' # Generic match for subproject/x.y.z
+    #   #- '[a-zA-Z-_]*\/[0-9]+\.[0-9]+\.[0-9]+' # Generic match for subproject/x.y.z
     #   - 'avatars\/[0-9]+\.[0-9]+\.[0-9]+' # Specific for avatars/x.y.z
 
 jobs:
@@ -14,24 +14,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Blender and package addon
+      - name: Calculate Version
+        id: version
+        run: |
+            FULL_VERSION=$(git describe --tags --abbrev=0 --match "avatars/[0-9]+.[0-9]+.[0-9]+" ${{ github.sha }})
+            VERSION=${FULL_VERSION#avatars/}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Setup Blender
         uses: moguri/setup-blender@v1
         with:
           blender-version: '4.2'
 
-      - name: Validate
+      - name: Validate version
         run: |
-          # cd $GITHUB_WORKSPACE/addons/banter_avatar_plugin
-          blender --command extension validate $GITHUB_WORKSPACE/addons/banter_avatar_plugin
-          blender --command extension build --source-dir $GITHUB_WORKSPACE/addons/banter_avatar_plugin
+          PLUGIN_PATH=$GITHUB_WORKSPACE/addons/banter_avatar_plugin
+          MANIFEST_VERSION=$(grep -oP '^version\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"' $PLUGIN_PATH/blender_manifest.toml | sed 's/version\s*=\s*\"\([0-9]\+\.[0-9]\+\.[0-9]\+\)\"/\1/')
+          if [ "$MANIFEST_VERSION" != ${{ steps.version.outputs.version}} ]; then
+            echo "Version mismatch: $MANIFEST_VERSION != $VERSION"
+            exit 1
+          fi
+
+      - name: Build extension
+        run: |
+          PLUGIN_PATH=$GITHUB_WORKSPACE/addons/banter_avatar_plugin
+          blender --command extension validate $PLUGIN_PATH
+          blender --command extension build --source-dir $PLUGIN_PATH
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          path: sidequest_banter_avatars-1.0.0.zip
-          name: sidequest_banter_avatars
-          
-
-    #   - name: Publish artifact
-    #     run: |
-    # 	  # Add publish commands here
+          path: sidequest_banter_avatars-*.zip
+          name: sidequest_banter_avatars-${{ steps.version.outputs.version }}
