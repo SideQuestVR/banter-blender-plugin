@@ -36,7 +36,7 @@ jobs:
           PLUGIN_PATH=$GITHUB_WORKSPACE/addons/banter_avatar_plugin
           MANIFEST_VERSION=$(grep -oP '^version\s*=\s*"[0-9]*\.[0-9]*\.[0-9]*"' $PLUGIN_PATH/blender_manifest.toml | sed 's/version\s*=\s*\"\([0-9]\+\.[0-9]\+\.[0-9]\+\)\"/\1/')
           if [ "$MANIFEST_VERSION" != ${{ steps.version.outputs.sem_version }} ]; then
-            echo "Version mismatch: $MANIFEST_VERSION != $VERSION"
+            echo "Version mismatch: $MANIFEST_VERSION != ${{ steps.version.outputs.sem_version }}"
             exit 1
           fi
 
@@ -65,7 +65,7 @@ jobs:
         with:
           files: sidequest_banter_avatars-*.zip
           tag_name: ${{ needs.package.outputs.full_version }}
-          name: Avatars ${{ needs.package.outputs.sem_version }}
+          name: "Avatars ${{ needs.package.outputs.sem_version }}"
           body: |
-            Release of version ${{ needs.package.outputs.sem_version }}
+            Release of version "${{ needs.package.outputs.sem_version }}"
           token: ${{ secrets.GITHUB_TOKEN }}
