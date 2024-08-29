@@ -4,8 +4,8 @@ on:
     branches:
       - "gh-actions"
     # tags:
-    #   #- '[a-zA-Z-_]*\/[0-9]+\.[0-9]+\.[0-9]+' # Generic match for subproject/x.y.z
-    #   - 'avatars\/[0-9]+\.[0-9]+\.[0-9]+' # Specific for avatars/x.y.z
+    #   #- '[a-zA-Z-_]*\/[0-9]*\.[0-9]*\.[0-9]*' # Generic match for subproject/x.y.z
+    #   - 'avatars\/[0-9]*\.[0-9]*\.[0-9]*' # Specific for avatars/x.y.z
 
 jobs:
   package:
@@ -17,7 +17,7 @@ jobs:
       - name: Calculate Version
         id: version
         run: |
-            FULL_VERSION=$(git describe --tags --abbrev=0 --match "avatars/[0-9]+.[0-9]+.[0-9]+" ${{ github.sha }})
+            FULL_VERSION=$(git describe --tags --abbrev=0 --match "avatars/[0-9]*.[0-9]*.[0-9]*" ${{ github.sha }})
             VERSION=${FULL_VERSION#avatars/}
             echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Setup Blender
