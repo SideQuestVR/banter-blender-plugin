@@ -2,14 +2,17 @@ name: Publish Extensions
 on:
   push:
     branches:
-      - "gh-actions"
-    # tags:
-    #   #- '[a-zA-Z-_]*\/[0-9]*\.[0-9]*\.[0-9]*' # Generic match for subproject/x.y.z
+     - "gh-actions"
+    #tags:
+    #   - '[a-zA-Z-_]*\/[0-9]*\.[0-9]*\.[0-9]*' # Generic match for subproject/x.y.z
     #   - 'avatars\/[0-9]*\.[0-9]*\.[0-9]*' # Specific for avatars/x.y.z
 
 jobs:
   package:
     runs-on: ubuntu-latest
+    outputs:
+      full_version: ${{ steps.version.outputs.full_version }}
+      sem_version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,8 +23,9 @@ jobs:
         id: version
         run: |
             FULL_VERSION=$(git describe --tags --abbrev=0 --match "avatars/[0-9]*.[0-9]*.[0-9]*" ${{ github.sha }})
-            VERSION=${FULL_VERSION#avatars/}
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            SEM_VERSION=${FULL_VERSION#avatars/}
+            echo "full_version=$FULL_VERSION" >> $GITHUB_OUTPUT
+            echo "sem_version=$SEM_VERSION" >> $GITHUB_OUTPUT
       - name: Setup Blender
         uses: moguri/setup-blender@v1
         with:
@@ -31,7 +35,7 @@ jobs:
         run: |
           PLUGIN_PATH=$GITHUB_WORKSPACE/addons/banter_avatar_plugin
           MANIFEST_VERSION=$(grep -oP '^version\s*=\s*"[0-9]*\.[0-9]*\.[0-9]*"' $PLUGIN_PATH/blender_manifest.toml | sed 's/version\s*=\s*\"\([0-9]\+\.[0-9]\+\.[0-9]\+\)\"/\1/')
-          if [ "$MANIFEST_VERSION" != ${{ steps.version.outputs.version}} ]; then
+          if [ "$MANIFEST_VERSION" != ${{ steps.version.outputs.sem_version}} ]; then
             echo "Version mismatch: $MANIFEST_VERSION != $VERSION"
             exit 1
           fi
@@ -46,4 +50,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: sidequest_banter_avatars-*.zip
-          name: sidequest_banter_avatars-${{ steps.version.outputs.version }}
+          name: sidequest_banter_avatars-${{ steps.version.outputs.sem_version }}
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sidequest_banter_avatars-${{ needs.package.outputs.sem_version }}
+
+      - name: Release on GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sidequest_banter_avatars-*.zip
+          tag_name: ${{ needs.package.outputs.full_version }}
+          name: Avatars ${{ needs.package.outputs.sem_version }}
+          body: |
+            Release of version ${{ needs.package.outputs.sem_version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
