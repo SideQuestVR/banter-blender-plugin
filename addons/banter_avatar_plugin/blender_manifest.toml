@@ -8,6 +8,6 @@ type = "add-on"
 permissions = { files = "Export glTF avatars", network = "Upload avatars to Banter" }
 tags = ["Import-Export", "Modeling"]
 blender_version_min = "4.2.0"
-license = ["SPDX:MIT"]
+license = ["SPDX:GPL-3.0-or-later", "SPDX:MIT"]
 website = "https://github.com/SideQuestVR/banter-blender-plugin"
 copyright = ["2024 SideQuest VR Ltd"]
