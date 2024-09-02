@@ -17,6 +17,7 @@ def get_version_string():
 
 
 import os
+import webbrowser
 from typing import List
 import bpy
 import bpy.utils.previews
@@ -493,8 +494,7 @@ class Banter_OT_OpenUrl(bpy.types.Operator):
         return not False
 
     def execute(self, context):
-        exec("import webbrowser")
-        exec(f"webbrowser.open('{self.url}')")
+        webbrowser.open(self.url)
         return {"FINISHED"}
 
 
