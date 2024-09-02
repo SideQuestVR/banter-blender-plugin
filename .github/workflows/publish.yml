@@ -1,11 +1,11 @@
 name: Publish Extensions
 on:
   push:
-    branches:
-     - "gh-actions"
-    #tags:
-    #   - '[a-zA-Z-_]*\/[0-9]*\.[0-9]*\.[0-9]*' # Generic match for subproject/x.y.z
-    #   - 'avatars\/[0-9]*\.[0-9]*\.[0-9]*' # Specific for avatars/x.y.z
+    # branches:
+    #  - "main"
+    tags:
+    #  - '[a-zA-Z-_]*\/[0-9]*\.[0-9]*\.[0-9]*' # Generic match for subproject/x.y.z
+      - 'avatars\/[0-9]*\.[0-9]*\.[0-9]*' # Specific for avatars/x.y.z
 
 jobs:
   package:
