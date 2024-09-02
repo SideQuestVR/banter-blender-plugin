@@ -67,7 +67,7 @@ jobs:
         with:
           files: sidequest_banter_avatars-*.zip
           tag_name: ${{ needs.package.outputs.full_version }}
-          name: "Avatars ${{ needs.package.outputs.sem_version }}"
+          name: Avatars ${{ needs.package.outputs.sem_version }}
           body: |
-            Release of version "${{ needs.package.outputs.sem_version }}"
+            Release of version ${{ needs.package.outputs.sem_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
