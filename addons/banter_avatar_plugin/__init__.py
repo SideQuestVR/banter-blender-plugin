@@ -92,7 +92,7 @@ class BANTER_PT_Configurator(bpy.types.Panel):
             context.scene, "banter_pArmature", text="", icon="OUTLINER_OB_ARMATURE"
         )
         if not bpy.context.scene.banter_pArmature:
-            col.operator("banter.import_armature", text="Create Default Armature")
+            col.operator("banter.dummy", text="Create Default Armature (coming soon)")
 
         layout.separator()
         # Local Avatar
