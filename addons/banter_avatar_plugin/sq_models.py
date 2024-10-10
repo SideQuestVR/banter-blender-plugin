@@ -80,8 +80,12 @@ class SqAppApiConfig:
 
         self.data_path = data_path
         self.data_file_name = data_file_name
-        self.root_api_uri = "api.sidetestvr.com" if test_mode else "api.sidequestvr.com"
-        self.root_cdn_uri = "cdn.sidetestvr.com" if test_mode else "cdn.sidequestvr.com"
+        self.root_api_uri = (
+            "api.sidetestvr.com" if test_mode else "api.friedquestvr.com"
+        )
+        self.root_cdn_uri = (
+            "cdn.sidetestvr.com" if test_mode else "cdn.friedquestvr.com"
+        )
         self.client_id = client_id
 
 
